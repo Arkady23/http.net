@@ -303,7 +303,7 @@ class Session{
           Content_Disposition=h;
           break;
         case CL:
-          Content_Length=Int32.Parse(h);
+          Content_Length=int.Parse(h);
           break;
         }
       }else{
@@ -518,7 +518,7 @@ value2
     await Stream.WriteAsync(cont1,0,cont1.Length);
 
     Proc.WaitForExit();
-    // Освободить резурсы
+    // Освободить ресурсы
     Proc.Dispose();
   }
 
