@@ -381,7 +381,7 @@ class Session{
   }
 
   async Task type(System.Net.Sockets.NetworkStream Stream){
-    // Загрузка файла побайтно через TextStream с использованием буфера 100 тыс. байт
+    // Отправка файла
     using (FileStream ts = File.OpenRead(res)){
       head+=CL+": "+ts.Length+"\r\n\r\n";
       byte[] b = System.Text.Encoding.UTF8.GetBytes(head);
@@ -391,7 +391,6 @@ class Session{
         k=b.Length;
         Array.Resize(ref b, i);
       }else{
-//        Stream.Write(b,k,b.Length);
         await Stream.WriteAsync(b,k,b.Length);
       }
 
