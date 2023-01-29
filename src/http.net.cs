@@ -410,7 +410,7 @@ class Session{
   }
 
   async Task send_wsf(System.Net.Sockets.NetworkStream Stream){
-    int i,N=0;
+    int N=0;
     string cont, dirname="", filename="";
     var wsf = new ProcessStartInfo();
 
@@ -438,8 +438,8 @@ class Session{
       FileStream file = null;
       StreamWriter sw = Proc.StandardInput;
       // R2==0 означает, что не все данные со входа Stream прочитаны
-      if(k>0 && k<bytes.Length){
-        i = bytes.Length-k;
+      if(k>0 && k<i){
+        i = i-k;
       }else{
         k=0;
         i = await Stream.ReadAsync(bytes,k,bytes.Length);
@@ -482,28 +482,33 @@ value2
             swt = sw.WriteAsync(bytes1);
             bytes1="";
           }
-          if (ft != null) await ft;
-          ft = file.WriteAsync(bytes,k,i);
-          N+=i;
+          if(i>0){
+            if (ft != null) await ft;
+            ft = file.WriteAsync(bytes,k,i);
+          }else{
+            R2=1;
+          }
         }else{
           // Всё записывать в поток
           if(i>0){
             bytes1+=Edos.GetString(bytes,k,i);
           }else{
-            N=Content_Length;
+            R2=1;
           }
           if(bytes1.Length>0){
-            N+=bytes1.Length;
-            if(N>Content_Length) bytes1=bytes1.Substring(0,N-Content_Length);
             if (swt != null) await swt;
             swt = sw.WriteAsync(bytes1);
             bytes1="";
           }
         }
-        if(N<Content_Length && R2==0){
-          i = await Stream.ReadAsync(bytes,0,bytes.Length);
+        N+=i;
+        if(N<Content_Length){
+          if(R2==0){
+            i = await Stream.ReadAsync(bytes,0,bytes.Length);
+          }else{
+            N=Content_Length;
+          }
         }
-        if(R2>0) N=Content_Length;
       }
       if (ft != null) await ft;
       if (file != null && file.CanRead) file.Close();
