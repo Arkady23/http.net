@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 public class httpd{
-  public static int port=8080, qu=80, bu=16384, st=80, log9=524200, post=33554432;
+  public static int port=8080, qu=888, bu=16384, st=888, log9=524200, post=33554432;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -19,12 +19,13 @@ public class httpd{
   public static Task logt = null;
   public static Task logf;
   Socket Server = null;
-  Session[] Session = new Session[st];
+  Session[] Session = null;
 
   public void RunServer(){
     int i;
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
+    Session = new Session[st];
     IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
     Server.Bind(ep);
     Server.Listen(qu);
@@ -163,8 +164,8 @@ class Session{
       }catch(IOException){
         return 1;
       }
+      httpd.logf=httpd.log.FlushAsync();
     }
-    httpd.logf=httpd.log.FlushAsync();
     return 0;
   }
 
@@ -383,6 +384,7 @@ class Session{
   async Task type(System.Net.Sockets.NetworkStream Stream){
     // Отправка файла
     using (FileStream ts = File.OpenRead(res)){
+      Task tt = null;
       head+=CL+": "+ts.Length+"\r\n\r\n";
       byte[] b = System.Text.Encoding.UTF8.GetBytes(head);
       int i=httpd.bu, k=0;
@@ -391,7 +393,7 @@ class Session{
         k=b.Length;
         Array.Resize(ref b, i);
       }else{
-        await Stream.WriteAsync(b,k,b.Length);
+        tt=Stream.WriteAsync(b,k,b.Length);
       }
 
       while ((i = await ts.ReadAsync(b,k,b.Length-k)) > 0){
@@ -402,10 +404,12 @@ class Session{
           b[b.Length-1]=10;
           b[b.Length-2]=13;
         }
-        await Stream.WriteAsync(b,0,i+k);
+        if(tt!=null) await tt;
+        tt=Stream.WriteAsync(b,0,i+k);
         if(k>0) k=0;
       }
       ts.Close();
+      if(tt!=null) await tt;
     }
   }
 
