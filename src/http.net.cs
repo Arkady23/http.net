@@ -15,7 +15,9 @@ public class httpd{
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
-  public static FileStream log = null;
+  public static byte status=0;
+  public static FileStream logx = null;
+  public static FileStream logy = null;
   public static Task logt = null;
   public static Task logf;
   Socket Server = null;
@@ -32,10 +34,12 @@ public class httpd{
     for(i = 0; i < st; i++) Session[i] = new Session(Server);
   }
   public void StopServer(){
+    status=9;
     Server.Close(8888);
     if (logt != null){
       logt.Wait();
-      log.Close();
+      if(logx!=null) logx.Close();
+      if(logy!=null) logy.Close();
     }
   }
 }
@@ -115,7 +119,9 @@ class Session{
       Stream.Close();
       while(R1!=0) if((R1=log(x1+res)) !=0) Thread.Sleep(123);
     }
-    Task RantAccept = Task.Run(()=>Accept(Server));
+    if(httpd.status<9){
+      Task RunAccept = Task.Run(()=>Accept(Server));
+    }
   }
 
   static byte log(string x){
@@ -144,27 +150,67 @@ class Session{
         httpd.logZ=httpd.logX;
       }
 
-      // Нужно ли переключение на другую часть?
-      if(old.Length>0 && httpd.logZ!=old){
-        if(httpd.logt != null) httpd.logt.Wait();
-        httpd.log.Close();
-        httpd.log=null;
+      switch(httpd.status){
+      case 0:
+        // Нужно ли переключение на другую часть?
+        if(old.Length>0 && httpd.logZ!=old){
+          httpd.status=1;
+          if(httpd.logZ==httpd.logX){
+            httpd.logZ=httpd.logY;
+            if(httpd.logx!=null) httpd.logx.Close();
+            httpd.logx = File.Open(httpd.logX,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
+          }else{
+            httpd.logZ=httpd.logX;
+            if(httpd.logy!=null) httpd.logy.Close();
+            httpd.logy = File.Open(httpd.logY,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
+          }
+          httpd.status=2;
+        }
+        break;
+      case 1:
+        // Писать пока в старый файл
+        if(httpd.logZ==httpd.logX){
+          httpd.logZ=httpd.logY;
+        }else{
+          httpd.logZ=httpd.logX;
+        }
+        break;
+      case 2:
+        // Уже можно писать в новый файл
+        httpd.status=0;
+        if(httpd.logZ==httpd.logX){
+          httpd.logf=httpd.logy.FlushAsync();
+        }else{
+          httpd.logf=httpd.logx.FlushAsync();
+        }
+        break;
       }
 
       // Теперь можно записать в файл logZ
-      if(!(httpd.log!=null))
-           httpd.log = File.Open(httpd.logZ,FileMode.Append,FileAccess.Write,FileShare.ReadWrite);
       byte[] b = System.Text.Encoding.UTF8.GetBytes(x+"\r\n");
       if(httpd.logt != null){
         httpd.logt.Wait();
         httpd.logf.Wait();
       }
-      try{
-        httpd.logt = httpd.log.WriteAsync(b,0,b.Length);
-      }catch(IOException){
-        return 1;
+      if(httpd.logZ==httpd.logX){
+        if(!(httpd.logx!=null))
+           httpd.logx = File.Open(httpd.logZ,FileMode.Append,FileAccess.Write,FileShare.ReadWrite);
+        try{
+          httpd.logt = httpd.logx.WriteAsync(b,0,b.Length);
+        }catch(IOException){
+          return 1;
+        }
+        httpd.logf=httpd.logx.FlushAsync();
+      }else{
+        if(!(httpd.logy!=null))
+           httpd.logy = File.Open(httpd.logZ,FileMode.Append,FileAccess.Write,FileShare.ReadWrite);
+        try{
+          httpd.logt = httpd.logy.WriteAsync(b,0,b.Length);
+        }catch(IOException){
+          return 1;
+        }
+        httpd.logf=httpd.logy.FlushAsync();
       }
-      httpd.logf=httpd.log.FlushAsync();
     }
     return 0;
   }
