@@ -10,16 +10,14 @@ using System.Threading;
 using System.Threading.Tasks;
 
 public class httpd{
-  public static int port=8080, qu=888, bu=16384, st=888, log9=524200, post=33554432;
+  public static int port=8080, qu=888, bu=16384, st=888, log9=10000, post=33554432,
+                    logi=0;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
-  public static byte status=0;
-  public static FileStream logx = null;
-  public static FileStream logy = null;
+  public static FileStream log = null;
   public static Task logt = null;
-  public static Task logf;
   Socket Server = null;
   Session[] Session = null;
 
@@ -34,13 +32,10 @@ public class httpd{
     for(i = 0; i < st; i++) Session[i] = new Session(Server);
   }
   public void StopServer(){
-    status=9;
+    logi=log9+8888;
     Server.Close(8888);
-    if (logt != null){
-      logt.Wait();
-      if(logx!=null) logx.Close();
-      if(logy!=null) logy.Close();
-    }
+    if(logt!=null) httpd.logt.Wait();
+    if(log !=null) log.Flush();
   }
 }
 
@@ -95,9 +90,9 @@ class Session{
       }
 
       res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
-      R1=log(x1+res);
 
       if(R>0){
+        R1=log(x1+res);
         head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
         if(R==2){
           if(File.Exists(res)){
@@ -117,9 +112,9 @@ class Session{
         }
       }
       Stream.Close();
-      while(R1!=0) if((R1=log(x1+res)) !=0) Thread.Sleep(123);
+//      while(R1!=0) if((R1=log(x1+res)) !=0) Thread.Sleep(23);
     }
-    if(httpd.status<9){
+    if(httpd.logi<httpd.log9){
       Task RunAccept = Task.Run(()=>Accept(Server));
     }
   }
@@ -129,87 +124,30 @@ class Session{
     // Сначала писать в X, затем в Y, затем снова в X и т.д.
 
     if(httpd.log9>0){
-      // Выбрать в какой файл писать logX или logY
-      string old=httpd.logZ;
-      if(File.Exists(httpd.logX)){
-        if(new FileInfo(httpd.logX).Length<httpd.log9){
-          httpd.logZ=httpd.logX;
-        }else{
-          if(File.Exists(httpd.logY)){
-            if(new FileInfo(httpd.logY).Length<httpd.log9){
-              httpd.logZ=httpd.logY;
-            }else{
-              httpd.logZ=(File.GetLastWriteTime(httpd.logX)<File.GetLastWriteTime(httpd.logY))?
-                          httpd.logX : httpd.logY;
-            }
-          }else{
-            httpd.logZ=httpd.logY;
-          }
-        }
+
+      // Нужно ли начать запись с начала журнала?
+      httpd.logi++;
+       if(httpd.logi>httpd.log9 && httpd.log!=null){
+        httpd.logi=1;
+        httpd.log.Seek(0,SeekOrigin.Begin);
+      }
+
+      if(!(httpd.log!=null)){
+        // Выбрать в какой файл писать logX или logY
+        httpd.logZ=(File.GetLastWriteTime(httpd.logX)<=File.GetLastWriteTime(httpd.logY))?
+                    httpd.logX : httpd.logY;
+        // Открыть нужный файл
+        httpd.log = File.Open(httpd.logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
       }else{
-        httpd.logZ=httpd.logX;
+        if(httpd.logt != null) httpd.logt.Wait();
       }
 
-      switch(httpd.status){
-      case 0:
-        // Нужно ли переключение на другую часть?
-        if(old.Length>0 && httpd.logZ!=old){
-          httpd.status=1;
-          if(httpd.logZ==httpd.logX){
-            httpd.logZ=httpd.logY;
-            if(httpd.logx!=null) httpd.logx.Close();
-            httpd.logx = File.Open(httpd.logX,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
-          }else{
-            httpd.logZ=httpd.logX;
-            if(httpd.logy!=null) httpd.logy.Close();
-            httpd.logy = File.Open(httpd.logY,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
-          }
-          httpd.status=2;
-        }
-        break;
-      case 1:
-        // Писать пока в старый файл
-        if(httpd.logZ==httpd.logX){
-          httpd.logZ=httpd.logY;
-        }else{
-          httpd.logZ=httpd.logX;
-        }
-        break;
-      case 2:
-        // Уже можно писать в новый файл
-        httpd.status=0;
-        if(httpd.logZ==httpd.logX){
-          httpd.logf=httpd.logy.FlushAsync();
-        }else{
-          httpd.logf=httpd.logx.FlushAsync();
-        }
-        break;
-      }
-
-      // Теперь можно записать в файл logZ
+      // Записать в файл
       byte[] b = System.Text.Encoding.UTF8.GetBytes(x+"\r\n");
-      if(httpd.logt != null){
-        httpd.logt.Wait();
-        httpd.logf.Wait();
-      }
-      if(httpd.logZ==httpd.logX){
-        if(!(httpd.logx!=null))
-           httpd.logx = File.Open(httpd.logZ,FileMode.Append,FileAccess.Write,FileShare.ReadWrite);
-        try{
-          httpd.logt = httpd.logx.WriteAsync(b,0,b.Length);
-        }catch(IOException){
-          return 1;
-        }
-        httpd.logf=httpd.logx.FlushAsync();
-      }else{
-        if(!(httpd.logy!=null))
-           httpd.logy = File.Open(httpd.logZ,FileMode.Append,FileAccess.Write,FileShare.ReadWrite);
-        try{
-          httpd.logt = httpd.logy.WriteAsync(b,0,b.Length);
-        }catch(IOException){
-          return 1;
-        }
-        httpd.logf=httpd.logy.FlushAsync();
+      try{
+        httpd.logt = httpd.log.WriteAsync(b,0,b.Length);
+      }catch(IOException){
+        return 1;
       }
     }
     return 0;
@@ -600,7 +538,7 @@ class catnet{
     }
   }
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, p9=65535, q9=2147483647, s9=15383, post9=33554432, log1=1024;
+    int i, k, b9=131072, p9=65535, q9=2147483647, s9=15383, post9=33554432, log1=80;
     bool l=true;
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
@@ -693,9 +631,9 @@ class catnet{
              заданных параметром -s. Если сумма обрабатываемых и ожидающих
              в очереди запросов будет превышена, то клиенту посылается
              отказ в обслуживании.
-     -log    Размер журнала регистрации запросов. Журнал состоит из двух      "+httpd.log9.ToString()+@"
-             чередующихся версий http.net.x.log и http.net.y.log. Если
-             задан размер менее 1024, то журнал не ведётся.
+     -log    Размер журнала регистрации запросов в строках. Журнал состоит    "+httpd.log9.ToString()+@"
+             из двух чередующихся версий http.net.x.log и http.net.y.log.
+             Если задан размер менее "+log1.ToString()+@", то журнал не ведётся.
      -post   Максимальный размер принимаемого запроса для передачи            "+httpd.post.ToString()+@"
              файлу-скрипту. Если он будет превышен, то запрос помещается в
              файл, имя которого передается скрипту в переменной окружения
