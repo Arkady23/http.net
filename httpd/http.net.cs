@@ -16,6 +16,7 @@ public class httpd{
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
+  public static byte[] logb = new byte[256];   // Для записей в журнал, 256 должно хватить.
   public static FileStream log = null;
   public static Task logt = null;
   Socket Server = null;
@@ -143,9 +144,9 @@ class Session{
       }
 
       // Записать в файл
-      byte[] b = System.Text.Encoding.UTF8.GetBytes(x+"\r\n");
+      int i=System.Text.Encoding.UTF8.GetBytes(x+"\r\n",0,x.Length+2,httpd.logb,0);
       try{
-        httpd.logt = httpd.log.WriteAsync(b,0,b.Length);
+        httpd.logt = httpd.log.WriteAsync(httpd.logb,0,i);
       }catch(IOException){
         return 1;
       }
@@ -321,6 +322,10 @@ class Session{
           putCT(ref Content_T,"image/svg+xml");
           h1=CC;
           break;
+        case "gif":
+          putCT(ref Content_T,"image/gif");
+          h1=CC;
+          break;
         case "png":
           putCT(ref Content_T,"image/png");
           h1=CC;
@@ -370,27 +375,28 @@ class Session{
     using (FileStream ts = File.OpenRead(res)){
       Task tt = null;
       head+=CL+": "+ts.Length+"\r\n\r\n";
-      byte[] b = System.Text.Encoding.UTF8.GetBytes(head);
-      int i=httpd.bu, k=0;
+      int k=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
+      int i=httpd.bu;
 
-      if(b.Length<i){
-        k=b.Length;
-        Array.Resize(ref b, i);
-      }else{
-        tt=Stream.WriteAsync(b,k,b.Length);
-      }
-
-      while ((i = await ts.ReadAsync(b,k,b.Length-k)) > 0){
+      while ((i = await ts.ReadAsync(bytes,k,bytes.Length-k)) > 0){
+        if(k>0){
+          i+=k;
+          k=0;
+        }
         if(ts.Length==ts.Position){
           // Добавляем в конец перенос строки
-          k+=2;
-          Array.Resize(ref b, i+k);
-          b[b.Length-1]=10;
-          b[b.Length-2]=13;
+          if(i+2>=bytes.Length){
+            if(tt!=null) await tt;
+            tt=Stream.WriteAsync(bytes,0,i);
+            i=0;
+          }
+          bytes[i]=10;
+          i++;
+          bytes[i]=13;
+          i++;
         }
         if(tt!=null) await tt;
-        tt=Stream.WriteAsync(b,0,i+k);
-        if(k>0) k=0;
+        tt=Stream.WriteAsync(bytes,0,i);
       }
       ts.Close();
       if(tt!=null) await tt;
@@ -554,7 +560,11 @@ class catnet{
         i++;
         if(i < Args.Length){
           k=int.Parse(Args[i]);
-          httpd.bu=(k > 0 && k <= b9)? k : b9;
+          if(k<256){
+            httpd.bu=256;
+          }else{
+            httpd.bu=(k <= b9)? k : b9;
+          }
         }            
         break;
       case "-q":
