@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 public class httpd{
   public static int port=8080, qu=888, bu=16384, st=888, log9=10000, post=33554432,
-                    logi=0;
+                    logi=0, i=0;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -54,7 +54,14 @@ class Session{
     Accept(Server);
   }
   public async void Accept(Socket Server){
+    Interlocked.Increment(ref httpd.i);
+    if(httpd.i>=httpd.st){
+      if(httpd.logt!=null) await httpd.logt;
+      if(httpd.log !=null) httpd.log.Flush();
+      if(httpd.i>httpd.st) Interlocked.Exchange(ref httpd.i,httpd.st);
+    }
     await AcceptProc(await Server.AcceptAsync(), Server);
+    Interlocked.Decrement(ref httpd.i);
   }
   public async Task AcceptProc(Socket Client, Socket Server){
     using(var Stream = new NetworkStream(Client,true)){
@@ -127,10 +134,11 @@ class Session{
     if(httpd.log9>0){
 
       // Нужно ли начать запись с начала журнала?
-      httpd.logi++;
-       if(httpd.logi>httpd.log9 && httpd.log!=null){
-        httpd.logi=1;
+      if(httpd.logi>=httpd.log9 && httpd.log!=null){
+        Interlocked.Exchange(ref httpd.logi,1);
         httpd.log.Seek(0,SeekOrigin.Begin);
+      }else{
+        Interlocked.Increment(ref httpd.logi);
       }
 
       if(!(httpd.log!=null)){
