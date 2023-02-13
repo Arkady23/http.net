@@ -16,14 +16,16 @@ public class httpd{
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
-  public static byte[] logb = new byte[256];   // Для записей в журнал, 256 должно хватить.
-  public static FileStream log = null;
+  public static StreamWriter logSW = null;
+  public static FileStream logFS = null;
+  public static TextWriter TW = null;
   public static Task logt = null;
   Socket Server = null;
   Session[] Session = null;
 
   public void RunServer(){
     int i;
+
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
     Session = new Session[st];
@@ -34,9 +36,16 @@ public class httpd{
   }
   public void StopServer(){
     logi=log9+8888;
+    log9=0;
+    if(logFS!=null){
+      if(logt!=null) logt.Wait();
+      logFS.Flush();
+
+      // Восстановить вывод на консоль
+      Console.SetOut(TW);
+      logSW.Close();
+    }
     Server.Close(8888);
-    if(logt!=null) httpd.logt.Wait();
-    if(log !=null) log.Flush();
   }
 }
 
@@ -57,7 +66,7 @@ class Session{
     Interlocked.Increment(ref httpd.i);
     if(httpd.i>=httpd.st){
       if(httpd.logt!=null) await httpd.logt;
-      if(httpd.log !=null) httpd.log.Flush();
+      if(httpd.logFS !=null) httpd.logFS.Flush();
       if(httpd.i>httpd.st) Interlocked.Exchange(ref httpd.i,httpd.st);
     }
     await AcceptProc(await Server.AcceptAsync(), Server);
@@ -134,27 +143,28 @@ class Session{
     if(httpd.log9>0){
 
       // Нужно ли начать запись с начала журнала?
-      if(httpd.logi>=httpd.log9 && httpd.log!=null){
+      if(httpd.logi>=httpd.log9 && httpd.logFS!=null){
         Interlocked.Exchange(ref httpd.logi,1);
-        httpd.log.Seek(0,SeekOrigin.Begin);
+        httpd.logFS.Seek(0,SeekOrigin.Begin);
       }else{
         Interlocked.Increment(ref httpd.logi);
       }
 
-      if(!(httpd.log!=null)){
-        // Выбрать в какой файл писать logX или logY
+      if(!(httpd.logFS!=null)){
+        // Отправка вывода на консоль в файл:
         httpd.logZ=(File.GetLastWriteTime(httpd.logX)<=File.GetLastWriteTime(httpd.logY))?
                     httpd.logX : httpd.logY;
-        // Открыть нужный файл
-        httpd.log = File.Open(httpd.logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
+        httpd.logFS = new FileStream(httpd.logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
+        httpd.TW = Console.Out;
+        httpd.logSW = new StreamWriter(httpd.logFS);
+        Console.SetOut(httpd.logSW);
       }else{
         if(httpd.logt != null) httpd.logt.Wait();
       }
 
       // Записать в файл
-      int i=System.Text.Encoding.UTF8.GetBytes(x+"\r\n",0,x.Length+2,httpd.logb,0);
       try{
-        httpd.logt = httpd.log.WriteAsync(httpd.logb,0,i);
+        Console.WriteLine(x);
       }catch(IOException){
         return 1;
       }
@@ -383,8 +393,7 @@ class Session{
     using (FileStream ts = File.OpenRead(res)){
       Task tt = null;
       head+=CL+": "+ts.Length+"\r\n\r\n";
-      int k=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
-      int i=httpd.bu;
+      int i, k=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
 
       while ((i = await ts.ReadAsync(bytes,k,bytes.Length-k)) > 0){
         if(k>0){
@@ -546,7 +555,6 @@ class catnet{
       httpd.RunServer();
       Console.TreatControlCAsInput=true;
       Console.ReadKey(true);
-      Console.WriteLine("Finalizing...");
       httpd.StopServer();
       Console.WriteLine("Server stoped :(((");
     }
