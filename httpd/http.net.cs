@@ -5,20 +5,23 @@ using System.Net;
 using System.Net.Sockets;
 using System.Diagnostics;
 using System.ComponentModel;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 public class httpd{
-  public static int port=8080, qu=888, bu=16384, st=888, log9=10000, post=33554432,
+  public static int port=8080, qu=888, bu=16384, st=888, log9=10000, post=33554432, le=524288,
                     logi=0, i=0;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
+  public static Dictionary<string,byte[]> Files = new Dictionary<string,byte[]>();
   public static StreamWriter logSW = null;
   public static FileStream logFS = null;
   public static TextWriter TW = null;
+  public static TextWriter TE = null;
   public static Task logt = null;
   Socket Server = null;
   Session[] Session = null;
@@ -42,10 +45,10 @@ public class httpd{
       logFS.Flush();
 
       // Восстановить вывод на консоль
+      Console.SetError(TE);
       Console.SetOut(TW);
       logSW.Close();
     }
-    Server.Close(8888);
   }
 }
 
@@ -156,8 +159,10 @@ class Session{
                     httpd.logX : httpd.logY;
         httpd.logFS = new FileStream(httpd.logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
         httpd.TW = Console.Out;
+        httpd.TE = Console.Error;
         httpd.logSW = new StreamWriter(httpd.logFS);
         Console.SetOut(httpd.logSW);
+        Console.SetError(httpd.logSW);
       }else{
         if(httpd.logt != null) httpd.logt.Wait();
       }
@@ -214,7 +219,8 @@ class Session{
     if(!x.EndsWith("/")) x+="/";
   }
 
-  static string valStr(ref string x, string Str){
+  // Узнать значение поля в заголовке (может понадобиться при разборе заголовков)
+/*  static string valStr(ref string x, string Str){
     string z="";
     if(x.Length>0){
       z=afterStr1(ref x," "+Str+"=");
@@ -228,7 +234,7 @@ class Session{
       }
     }
     return z;
-  }
+  } */
 
   static bool gzExists(ref string res, ref string head){
     string gz=res+".gz";
@@ -390,34 +396,59 @@ class Session{
 
   async Task type(System.Net.Sockets.NetworkStream Stream){
     // Отправка файла
-    using (FileStream ts = File.OpenRead(res)){
-      Task tt = null;
-      head+=CL+": "+ts.Length+"\r\n\r\n";
-      int i, k=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
+    long NN = new System.IO.FileInfo(res).Length;
+    string key = res+File.GetLastWriteTime(res).ToString("yyyyMMddHHmmssfff");
 
-      while ((i = await ts.ReadAsync(bytes,k,bytes.Length-k)) > 0){
-        if(k>0){
-          i+=k;
-          k=0;
-        }
-        if(ts.Length==ts.Position){
-          // Добавляем в конец перенос строки
-          if(i+2>=bytes.Length){
-            if(tt!=null) await tt;
-            tt=Stream.WriteAsync(bytes,0,i);
-            i=0;
-          }
-          bytes[i]=10;
-          i++;
-          bytes[i]=13;
-          i++;
-        }
-        if(tt!=null) await tt;
-        tt=Stream.WriteAsync(bytes,0,i);
+    Task tt = null;
+    byte found;
+    int i,j,k;
+    if(NN > httpd.le){
+      found=0;
+    }else{
+      try{
+        httpd.Files.Add(key, new byte[NN]);
+        found = 7;
+      }catch (ArgumentException){
+        found = 1;
       }
-      ts.Close();
-      if(tt!=null) await tt;
     }
+    if(found == 1){
+      head+=CL+": "+NN+"\r\n\r\n";
+      i=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
+      tt=Stream.WriteAsync(bytes,0,i);
+      tt=Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
+    }else{
+      using (FileStream ts = File.OpenRead(res)){
+        head+=CL+": "+ts.Length+"\r\n\r\n";
+        k=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
+        j=bytes.Length-k;
+        while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
+          if(found > 0) {
+            Array.Copy(bytes,k,httpd.Files[key],0,i);
+          }
+          if(k>0){
+            i+=k;
+            j=bytes.Length;
+            k=0;
+          }
+          if(ts.Length==ts.Position){
+            // Добавляем в конец перенос строки
+            if(i+2>=bytes.Length){
+              if(tt!=null) await tt;
+              tt=Stream.WriteAsync(bytes,0,i);
+              i=0;
+            }
+            bytes[i]=10;
+            i++;
+            bytes[i]=13;
+            i++;
+          }
+          tt=Stream.WriteAsync(bytes,0,i);
+        }
+        ts.Close();
+      }
+    }
+    if(tt!=null) await tt;
   }
 
   async Task send_wsf(System.Net.Sockets.NetworkStream Stream){
@@ -540,7 +571,7 @@ value2
 
 }
 
-class catnet{
+class main{
   static void Main(string[] Args){
     Directory.SetCurrentDirectory(System.IO.Path.GetDirectoryName(
               System.Reflection.Assembly.GetEntryAssembly().Location));
@@ -560,7 +591,8 @@ class catnet{
     }
   }
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, p9=65535, q9=2147483647, s9=15383, post9=33554432, log1=80;
+    int i, k, b9=131072, p9=65535, q9=2147483647, s9=15383, post9=33554432,
+              less9=524288, log1=80;
     bool l=true;
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
@@ -611,6 +643,13 @@ class catnet{
           httpd.post=(k > 0)? k : post9;
         }            
         break;
+      case "-less":
+        i++;
+        if(i < Args.Length){
+          k=int.Parse(Args[i]);
+          httpd.le=(k > 0)? k : less9;
+        }            
+        break;
       case "-d":
         i++;
         if(i < Args.Length) httpd.DocumentRoot=Args[i];
@@ -632,7 +671,7 @@ class catnet{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.0, (C) kornienko.ru январь 2023.
+        Console.Write(@"Многопоточный http.net сервер версия 1.1, (C) kornienko.ru февраль 2023.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
@@ -660,6 +699,9 @@ class catnet{
      -log    Размер журнала регистрации запросов в строках. Журнал состоит    "+httpd.log9.ToString()+@"
              из двух чередующихся версий http.net.x.log и http.net.y. Если
              задан размер менее "+log1.ToString()+@", то журнал не ведётся.
+     -less   Максимальный размер небольших файлов, которые должны             "+httpd.le.ToString()+@"
+             кешироваться. Все такие файлы при обращении к ним для повышения
+             производительности будут сохраняться в оперативной памяти.
      -post   Максимальный размер принимаемого запроса для передачи            "+httpd.post.ToString()+@"
              файлу-скрипту. Если он будет превышен, то запрос помещается в
              файл, имя которого передается скрипту в переменной окружения
