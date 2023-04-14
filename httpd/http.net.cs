@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 public class httpd{
   public static int port=8080, qu=888, bu=16384, st=888, log9=10000, post=33554432, le=524288,
-                    logi=0, i=0;
+                    logi=0, i=0, j;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -22,26 +22,23 @@ public class httpd{
   public static FileStream logFS = null;
   public static TextWriter TW = null;
   public static TextWriter TE = null;
-  public static Task logt = null;
   Socket Server = null;
   Session[] Session = null;
 
   public void RunServer(){
-    int i;
-
+    ThreadPool.SetMinThreads(4,8);
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
     Session = new Session[st];
     IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
     Server.Bind(ep);
     Server.Listen(qu);
-    for(i = 0; i < st; i++) Session[i] = new Session(Server);
+    for(j = 0; j < st; j++) Session[j] = new Session(Server);
   }
   public void StopServer(){
     logi=log9+8888;
     log9=0;
     if(logFS!=null){
-      if(logt!=null) logt.Wait();
       logFS.Flush();
 
       // Восстановить вывод на консоль
@@ -68,7 +65,6 @@ class Session{
   public async void Accept(Socket Server){
     Interlocked.Increment(ref httpd.i);
     if(httpd.i>=httpd.st){
-      if(httpd.logt!=null) await httpd.logt;
       if(httpd.logFS !=null) httpd.logFS.Flush();
       if(httpd.i>httpd.st) Interlocked.Exchange(ref httpd.i,httpd.st);
     }
@@ -163,8 +159,6 @@ class Session{
         httpd.logSW = new StreamWriter(httpd.logFS);
         Console.SetOut(httpd.logSW);
         Console.SetError(httpd.logSW);
-      }else{
-        if(httpd.logt != null) httpd.logt.Wait();
       }
 
       // Записать в файл
@@ -417,6 +411,7 @@ class Session{
       i=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
       tt=Stream.WriteAsync(bytes,0,i);
       tt=Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
+      tt=Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
         head+=CL+": "+ts.Length+"\r\n\r\n";
@@ -572,10 +567,12 @@ value2
 }
 
 class main{
+  public static httpd httpd = null;
+
   static void Main(string[] Args){
     Directory.SetCurrentDirectory(System.IO.Path.GetDirectoryName(
               System.Reflection.Assembly.GetEntryAssembly().Location));
-    httpd httpd = new httpd();
+    httpd = new httpd();
     if(getArgs(Args)){
       if(httpd.Args.Length==0){
         if(httpd.Proc.Substring(httpd.Proc.Length-11,11)=="cscript.exe" ||
@@ -584,12 +581,19 @@ class main{
         httpd.Args+=" ";
       }
       httpd.RunServer();
+      AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
       Console.TreatControlCAsInput=true;
       Console.ReadKey(true);
       httpd.StopServer();
       Console.WriteLine("Server stoped :(((");
     }
   }
+
+  static void CurrentDomain_ProcessExit(object sender, EventArgs e){
+    // аварийное завершение или выключение ПК
+    httpd.StopServer();
+  }
+
   static bool getArgs(String[] Args){
     int i, k, b9=131072, p9=65535, q9=2147483647, s9=15383, post9=33554432,
               less9=524288, log1=80;
