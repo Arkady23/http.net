@@ -683,7 +683,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.1, (C) kornienko.ru февраль 2023.
+        Console.Write(@"Многопоточный http.net сервер версия 1.2, (C) kornienko.ru апрель 2023.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
