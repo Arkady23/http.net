@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 public class httpd{
   public static int port=8080, qu=888, bu=16384, st=888, log9=10000, post=33554432, le=524288,
-                    logi=0, i=0, j;
+                    logi=0, i;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -22,6 +22,7 @@ public class httpd{
   public static FileStream logFS = null;
   public static TextWriter TW = null;
   public static TextWriter TE = null;
+  public static DateTime DT;
   Socket Server = null;
   Session[] Session = null;
 
@@ -33,12 +34,13 @@ public class httpd{
     IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
     Server.Bind(ep);
     Server.Listen(qu);
-    for(j = 0; j < st; j++) Session[j] = new Session(Server);
+    for(i = 0; i < st; i++) Session[i] = new Session(Server);
   }
   public void StopServer(){
     logi=log9+8888;
     log9=0;
     if(logFS!=null){
+      logSW.Flush();
       logFS.Flush();
 
       // Восстановить вывод на консоль
@@ -62,15 +64,21 @@ class Session{
   public Session(Socket Server){
     Accept(Server);
   }
+
   public async void Accept(Socket Server){
-    Interlocked.Increment(ref httpd.i);
-    if(httpd.i>=httpd.st){
-      if(httpd.logFS !=null) httpd.logFS.Flush();
-      if(httpd.i>httpd.st) Interlocked.Exchange(ref httpd.i,httpd.st);
-    }
+    httpd.DT=DateTime.UtcNow;
+    var LogFlush = Task.Run(async delegate{
+      await Task.Delay(1000);
+      if(httpd.DT.AddMilliseconds(1000)<DateTime.UtcNow){
+        if(httpd.logFS !=null){
+          httpd.logSW.Flush();
+          httpd.logFS.Flush();
+        }
+      }
+    });
     await AcceptProc(await Server.AcceptAsync(), Server);
-    Interlocked.Decrement(ref httpd.i);
   }
+
   public async Task AcceptProc(Socket Client, Socket Server){
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
