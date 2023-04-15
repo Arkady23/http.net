@@ -22,7 +22,7 @@ public class httpd{
   public static FileStream logFS = null;
   public static TextWriter TW = null;
   public static TextWriter TE = null;
-  public static DateTime DT;
+  public static long DTi;
   Socket Server = null;
   Session[] Session = null;
 
@@ -66,10 +66,10 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    httpd.DT=DateTime.UtcNow;
+    Interlocked.Exchange(ref httpd.DTi,DateTime.UtcNow.Ticks);
     var LogFlush = Task.Run(async delegate{
-      await Task.Delay(1000);
-      if(httpd.DT.AddMilliseconds(1000)<DateTime.UtcNow){
+      await Task.Delay(3000);
+      if(httpd.DTi+30000000<DateTime.UtcNow.Ticks){
         if(httpd.logFS !=null){
           httpd.logSW.Flush();
           httpd.logFS.Flush();
