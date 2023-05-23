@@ -403,7 +403,7 @@ class Session{
 
     Task tt = null;
     byte found;
-    int i,j,k;
+    int i,j,k,m=0;
     if(NN > httpd.le){
       found=0;
     }else{
@@ -427,7 +427,8 @@ class Session{
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
-            Array.Copy(bytes,k,httpd.Files[key],0,i);
+            Array.Copy(bytes,k,httpd.Files[key],m,i);
+            m+=i;
           }
           if(k>0){
             i+=k;
