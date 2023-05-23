@@ -2,7 +2,7 @@
 Multithreaded http.net server on C#
 ```
 D:\work\httpd>http.net /?
-Многопоточный http.net сервер версия 1.2, (C) kornienko.ru апрель 2023.
+Многопоточный http.net сервер версия 1.3, (C) kornienko.ru май 2023.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
