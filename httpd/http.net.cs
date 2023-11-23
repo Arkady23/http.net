@@ -564,7 +564,7 @@ value2
 
     // Вывод полученных данных wsf-скрипта
     cont=Proc.StandardOutput.ReadToEnd();
-    byte[] cont1 = Encoding.UTF8.GetBytes(head+CL+": "+cont.Length+"\r\n\r\n"+
+    byte[] cont1 = Encoding.UTF8.GetBytes(head+
                Encoding.UTF8.GetString(Edos.GetBytes(cont))+"\r\n");
     await Stream.WriteAsync(cont1,0,cont1.Length);
 
@@ -684,7 +684,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.3, (C) kornienko.ru май 2023.
+        Console.Write(@"Многопоточный http.net сервер версия 1.4, (C) kornienko.ru ноябрь 2023.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
