@@ -67,14 +67,13 @@ class Session{
 
   public async void Accept(Socket Server){
     Interlocked.Exchange(ref httpd.DTi,DateTime.UtcNow.Ticks);
+    if(httpd.log9>0 && !(httpd.logFS!=null)){
+      R1=log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t\tThe http-server is running...");
+      httpd.logSW.Flush();
+    }
     var LogFlush = Task.Run(async delegate{
       await Task.Delay(3000);
-      if(httpd.DTi+30000000<DateTime.UtcNow.Ticks){
-        if(httpd.logFS !=null){
-          httpd.logSW.Flush();
-          httpd.logFS.Flush();
-        }
-      }
+      if(httpd.DTi+30000000<DateTime.UtcNow.Ticks) httpd.logSW.Flush();
     });
     await AcceptProc(await Server.AcceptAsync(), Server);
   }
@@ -416,14 +415,14 @@ class Session{
     }
     if(found == 1){
       head+=CL+": "+NN+"\r\n\r\n";
-      i=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
+      i=Edos.GetBytes(head,0,head.Length,bytes,0);
       tt=Stream.WriteAsync(bytes,0,i);
       tt=Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
       tt=Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
         head+=CL+": "+ts.Length+"\r\n\r\n";
-        k=System.Text.Encoding.UTF8.GetBytes(head,0,head.Length,bytes,0);
+        k=Edos.GetBytes(head,0,head.Length,bytes,0);
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
@@ -460,6 +459,7 @@ class Session{
     string cont, dirname="", filename="";
     var wsf = new ProcessStartInfo();
 
+    wsf.EnvironmentVariables["SCRIPT_FILENAME"] = res;
     wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
     wsf.EnvironmentVariables["HTTP_COOKIE"] = Cookie;
     wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
@@ -564,8 +564,8 @@ value2
 
     // Вывод полученных данных wsf-скрипта
     cont=Proc.StandardOutput.ReadToEnd();
-    byte[] cont1 = Encoding.UTF8.GetBytes(head+
-               Encoding.UTF8.GetString(Edos.GetBytes(cont))+"\r\n");
+    byte[] cont1 = Encoding.GetEncoding(866).GetBytes(head+cont+"\r\n");
+
     await Stream.WriteAsync(cont1,0,cont1.Length);
 
     Proc.WaitForExit();
@@ -684,7 +684,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.4, (C) kornienko.ru ноябрь 2023.
+        Console.Write(@"Многопоточный http.net сервер версия 1.6, (C) kornienko.ru январь 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
