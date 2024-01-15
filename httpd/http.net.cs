@@ -564,7 +564,7 @@ value2
 
     // Вывод полученных данных wsf-скрипта
     cont=Proc.StandardOutput.ReadToEnd();
-    byte[] cont1 = Encoding.GetEncoding(866).GetBytes(head+cont+"\r\n");
+    byte[] cont1 = Edos.GetBytes(head+cont+"\r\n");
 
     await Stream.WriteAsync(cont1,0,cont1.Length);
 
