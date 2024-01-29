@@ -70,6 +70,7 @@ class Session{
     if(httpd.log9>0 && !(httpd.logFS!=null)){
       R1=log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t\tThe http-server is running...");
       httpd.logSW.Flush();
+      httpd.logFS.Flush();
     }
     var LogFlush = Task.Run(async delegate{
       await Task.Delay(3000);
