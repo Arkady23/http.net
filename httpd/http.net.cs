@@ -468,7 +468,7 @@ class Session{
       if(Content_Type.LastIndexOf("form-")<0 || Content_Length>httpd.post){
         filename=valStr(ref Content_Disposition,"filename");
         if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
-        wsf.EnvironmentVariables["POST_DATA"] = filename = dirname+"/"+filename;
+        wsf.EnvironmentVariables["FILE"] = filename = dirname+"/"+filename;
       }
     }
     wsf.RedirectStandardOutput = true;
@@ -711,12 +711,12 @@ class main{
      -post   Максимальный размер принимаемого запроса для передачи            "+httpd.post.ToString()+@"
              файлу-скрипту. Если он будет превышен, то запрос помещается в
              файл, имя которого передается скрипту в переменной окружения
-             POST_DATA. Другие формируемые переменные окружения -
-             QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. Если в данных запроса
-             отсутствует директива form-..., то входящий поток данных
-             целиком будет помещен в файл. Эта особенность может
-             использоваться для передачи серверу файлов. При этом имя файла
-             будет находиться в переменной окружения POST_DATA.
+             FILE. Другие формируемые переменные окружения - QUERY_STRING,
+             HTTP_COOKIE, REMOTE_ADDR. Если в данных запроса отсутствует
+             директива form-..., то входящий поток данных целиком будет
+             помещен в файл. Эта особенность может использоваться для
+             передачи серверу файлов. При этом имя файла будет находиться в
+             переменной окружения FILE.
      -proc   Используемый оброботчик скриптов. Если нобходимо, то нужно       "+httpd.Proc+@"
              также включить полный путь к исполняемому файлу. По умолчанию
              используется встроенный в ОС Microsoft Windows компонент,
