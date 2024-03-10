@@ -11,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 public class httpd{
-  public static int port=8080, qu=888, bu=16384, st=888, log9=10000, post=33554432, le=524288,
+  public static int port=8080, qu=8888, bu=16384, st=8888, log9=10000, post=33554432, le=524288,
                     logi=0, i;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
@@ -219,7 +219,7 @@ class Session{
   }
 
   // Узнать значение поля в заголовке (может понадобиться при разборе заголовков)
-/*  static string valStr(ref string x, string Str){
+  static string valStr(ref string x, string Str){
     string z="";
     if(x.Length>0){
       z=afterStr1(ref x," "+Str+"=");
@@ -233,7 +233,7 @@ class Session{
       }
     }
     return z;
-  } */
+  }
 
   static bool gzExists(ref string res, ref string head){
     string gz=res+".gz";
@@ -280,8 +280,8 @@ class Session{
     string lin=line1(Edos, ref bytes, ref bytes1, ref k, ref b),n,h;
 
     while (lin.Length>0){
-//      Console.WriteLine("|"+lin+"|");
-//      log(lin);
+//  Console.WriteLine("|"+lin+"|");
+//  log(lin);
       h=afterStr1(ref lin,":");
       h=ltri(ref h);
       if(h.Length>0){
@@ -466,8 +466,9 @@ class Session{
       wsf.RedirectStandardInput = true;
       // Поставить разумное ограничение на размер потока
       if(Content_Type.LastIndexOf("form-")<0 || Content_Length>httpd.post){
-        filename=dirname+"/"+DateTime.Now.ToString("HHmmssfff");
-        wsf.EnvironmentVariables["POST_DATA"] = filename;
+        filename=valStr(ref Content_Disposition,"filename");
+        if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
+        wsf.EnvironmentVariables["POST_DATA"] = filename = dirname+"/"+filename;
       }
     }
     wsf.RedirectStandardOutput = true;
@@ -487,6 +488,15 @@ class Session{
       }else{
         k=0;
         i = await Stream.ReadAsync(bytes,k,bytes.Length);
+      }
+      if (filename.Length>0){
+        // Открыть файл, если он не открыт
+        if (File.Exists(filename)){
+          File.Delete(filename);
+        }else if(!Directory.Exists(dirname)){
+          Directory.CreateDirectory(dirname);
+        }
+        file = new FileStream(filename,FileMode.Create);
       }
       // Записать данные из буфера bytes
       // выделить файлы отдельно, а переменные в поток в соответсвии с примером:
@@ -510,24 +520,7 @@ value2
 
       while (N<Content_Length){
         if(filename.Length>0){
-          // Всё записывать в файл
-          if (!(file != null)){
-            // Открыть файл, если он не открыт
-            if (File.Exists(filename)){
-              File.Delete(filename);
-            }else if(!Directory.Exists(dirname)){
-              Directory.CreateDirectory(dirname);
-            }
-            file = new FileStream(filename,FileMode.Create);
-          }
-          if(bytes1.Length>0){
-            // Это записать в поток, не в файл
-            if (swt != null) await swt;
-            swt = sw.WriteAsync(bytes1);
-            bytes1="";
-          }
           if(i>0){
-            if (ft != null) await ft;
             ft = file.WriteAsync(bytes,k,i);
           }else{
             R2=1;
@@ -539,15 +532,17 @@ value2
           }else{
             R2=1;
           }
-          if(bytes1.Length>0){
-            if (swt != null) await swt;
-            swt = sw.WriteAsync(bytes1);
-            bytes1="";
-          }
+        }
+        if(bytes1.Length>0){
+          // Это записать в поток, не в файл
+          if (swt != null) await swt;
+          swt = sw.WriteAsync(bytes1);
+          bytes1="";
         }
         N+=i;
         if(N<Content_Length){
           if(R2==0){
+            if (ft != null) await ft;
             i = await Stream.ReadAsync(bytes,0,bytes.Length);
           }else{
             N=Content_Length;
@@ -682,7 +677,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.7, (C) kornienko.ru февраль 2024.
+        Console.Write(@"Многопоточный http.net сервер версия 1.8, (C) kornienko.ru март 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
