@@ -280,7 +280,7 @@ class Session{
     string lin=line1(Edos, ref bytes, ref bytes1, ref k, ref b),n,h;
 
     while (lin.Length>0){
-//  Console.WriteLine("|"+lin+"|");
+//  Console.WriteLine("lin=|"+lin+"|");
 //  log(lin);
       h=afterStr1(ref lin,":");
       h=ltri(ref h);
@@ -477,6 +477,7 @@ class Session{
     wsf.FileName = httpd.Proc;
     wsf.Arguments = httpd.Args+"\""+res+"\"";
     Process Proc = Process.Start(wsf);
+
     if(Content_Length>0){
       Task ft = null;
       Task swt = null;
@@ -551,7 +552,7 @@ value2
       }
       if (ft != null) await ft;
       if (file != null && file.CanRead) file.Close();
-      if (swt != null) await swt;
+      if (swt != null) try{await swt;}catch(IOException){}
       sw.Close();
     }
 
