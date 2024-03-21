@@ -1,5 +1,5 @@
 # http.net
-Multithreaded http.net server on C#
+Multithreaded http.net server on C#. Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9.10 DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable.
 ```
 D:\work\httpd>http.net /?
 Многопоточный http.net сервер версия 1.81, (C) kornienko.ru март 2024.
