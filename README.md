@@ -59,6 +59,23 @@ D:\work\httpd>http.net /?
 The root folder for domains (by default www) must contain folders that match the domain name and subdomain of the requested resource. For example, if the request looks like http://a.kornienko.ru , then there should be a folder named in the root folder for domains a.kornienko.ru. If you need to provide aliases with other names, then you can create a folder in the root folder as a symbolic link to another folder.  
 
 Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9.10 DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
+```
+* * * * * * * * * * * * * * * * * * * * * * * * * * * 
+*  Тест. Вывод переменных окружения.
+* * * * * * * * * * * * * * * * * * * * * * * * * * * 
+  stdout=""
+  c13=chr(10)+chr(13)
+  stdout="<h1>Привет мир из MS VFP!</h1>" + ;
+         "<h3>Переменные окружения:</h3>" + ;
+         "SCRIPT_FILENAME=" + SCRIPT_FILENAME + ";<br>" + c13 + ;
+         "QUERY_STRING=" + QUERY_STRING + ";<br>" + c13+ ;
+         "HTTP_COOKIE=" + HTTP_COOKIE + ";<br>" + c13 + ;
+         "REMOTE_ADDR=" + REMOTE_ADDR + ";<br>" + c13 + ;
+         "STD_INPUT=" + STD_INPUT + ";<br>" + c13 + ;
+         "POST_FILENAME=" + POST_FILENAME + ";<br>" + c13
+  stdout= stdout + "ERROR_MESS=" + ERROR_MESS
+return c13+stdout
+```
 ### История версий
 В папке httpd всегда можно скачать последнюю рабочую версию: http.net.exe.  
   
