@@ -80,7 +80,7 @@ The visual result of the prg script:
 ![The visual result of the prg script](screenShots/2024-03-21.png)
 
 If there is an error in the prg file:
-![If there is an error in the prg file](screenShots/screenShots/if-error-in-prg-file.png)
+![If there is an error in the prg file](screenShots/if-error-in-prg-file.png)
 ### История версий
 В папке httpd всегда можно скачать последнюю рабочую версию: http.net.exe.  
   
