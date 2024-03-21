@@ -11,32 +11,38 @@ using System.Threading;
 using System.Threading.Tasks;
 
 public class httpd{
-  public static int port=8080, qu=8888, bu=16384, st=8888, log9=10000, post=33554432, le=524288,
-                    logi=0, i;
+  public static int port=8080, qu=8888, bu=16384, st=8888, db=22, log9=10000,
+                    post=33554432, le=524288, logi=0, i;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
   public static Dictionary<string,byte[]> Files = new Dictionary<string,byte[]>();
+  public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
   public static StreamWriter logSW = null;
   public static FileStream logFS = null;
   public static TextWriter TW = null;
   public static TextWriter TE = null;
+  public static dynamic[] vfp = null;
+  public static byte[] vfpb = null;
   public static long DTi;
   Socket Server = null;
   Session[] Session = null;
-
+  
   public void RunServer(){
     ThreadPool.SetMinThreads(4,8);
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
     Session = new Session[st];
     IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
+    vfp = new dynamic[db];
+    vfpb = new byte[db];
     Server.Bind(ep);
     Server.Listen(qu);
-    for(i = 0; i < st; i++) Session[i] = new Session(Server);
+    for(i=0; i<st; i++) Session[i] = new Session(Server);
   }
   public void StopServer(){
+    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) vfp[i].Quit();
     logi=log9+8888;
     log9=0;
     if(logFS!=null){
@@ -51,7 +57,8 @@ public class httpd{
 class Session{
   const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                CC="Cache-Control: public, max-age=2300000\r\n";
-  Encoding Edos = System.Text.Encoding.GetEncoding(866);
+  Encoding Edos = Encoding.GetEncoding(866);
+  Encoding Ewin = Encoding.GetEncoding("windows-1251");
   private int i,k,Content_Length;
   private string bytes1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
                  QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
@@ -115,9 +122,13 @@ class Session{
       if(R>0){
         R1=log(x1+res);
         head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
-        if(R==2){
+        if(R>1){
           if(File.Exists(res)){
-            await send_wsf(Stream);
+            if(R==2){
+              await send_wsf(Stream);
+            }else{
+              await send_prg(Stream);
+            }
           }else{
             R=1;
           }
@@ -214,10 +225,6 @@ class Session{
     c=CT+": "+x+"\r\n";
   }
 
-  static void putSl(ref string x){
-    if(!x.EndsWith("/")) x+="/";
-  }
-
   // Узнать значение поля в заголовке (может понадобиться при разборе заголовков)
   static string valStr(ref string x, string Str){
     string z="";
@@ -280,8 +287,8 @@ class Session{
     string lin=line1(Edos, ref bytes, ref bytes1, ref k, ref b),n,h;
 
     while (lin.Length>0){
-//  Console.WriteLine("lin=|"+lin+"|");
-//  log(lin);
+// Console.WriteLine("lin=|"+lin+"|");
+// log(lin);
       h=afterStr1(ref lin,":");
       h=ltri(ref h);
       if(h.Length>0){
@@ -327,13 +334,15 @@ class Session{
 
   static string prepResource(ref string reso, ref string QUERY_STRING, ref string Host,
                              ref byte R, ref string h1, ref string Content_T){
-    string ext,sub,res="";
+    string sub,res="",ext=".";
     if(reso.Length>0 && Host.Length>0){
       res=HttpUtility.UrlDecode(reso);
       QUERY_STRING=afterStr1(ref res,"?");
       res=beforStr1(ref res,"?");
       sub=beforStr1(ref Host,":");
-      ext=afterStr9(ref res,".");
+      // ".." в запроах недопустимы в целях безопасности
+      if(res.IndexOf("..")<0) ext=afterStr9(ref res,ext);
+      
       if(ext.Length>0){
         R=1;
         switch(ext){
@@ -375,20 +384,23 @@ class Session{
           h1=CC;
           break;
         default:
-          if(ext==httpd.Ext){
-            R=2;
+          if(ext==httpd.Ext || ext=="prg"){
+            if(ext==httpd.Ext){R=2;}else{R=3;}
             putCT(ref Content_T,"text/html");
+          }else{
+            // Все другие расширения недопустимы в целях безопасности
+            R=0;
           }
           break;
         }
       }else{
         R=1;
-        putSl(ref res);
+        if(!res.EndsWith("/")) res+="/";
         putCT(ref Content_T,"text/html");
         res=res+httpd.DirectoryIndex;
       }
-      putSl(ref httpd.DocumentRoot);
-      res=httpd.DocumentRoot+sub+res;
+      reso=sub+res;
+      res=httpd.DocumentRoot+reso;
     }
     return res;
   }
@@ -454,6 +466,7 @@ class Session{
 
   async Task send_wsf(System.Net.Sockets.NetworkStream Stream){
     int N=0;
+    byte[] cont1;
     string cont, dirname="", filename="";
     var wsf = new ProcessStartInfo();
 
@@ -558,13 +571,126 @@ value2
 
     // Вывод полученных данных wsf-скрипта
     cont=Proc.StandardOutput.ReadToEnd();
-    byte[] cont1 = Edos.GetBytes(head+cont+"\r\n");
+    cont1=Edos.GetBytes(head+cont+"\r\n");
 
     await Stream.WriteAsync(cont1,0,cont1.Length);
 
     Proc.WaitForExit();
     // Освободить ресурсы
     Proc.Dispose();
+  }
+
+  async Task send_prg(System.Net.Sockets.NetworkStream Stream){
+    int j=-1, N=0;
+    byte[] cont1;
+    string prg=afterStr9(ref res,"/"), dirprg=System.IO.Path.GetDirectoryName(
+           System.Reflection.Assembly.GetEntryAssembly().Location),dirname="",
+           filename="",stdin="";
+
+    if(httpd.vfpa!=null){
+      for(j=0; j<httpd.db; j++){
+        if(httpd.vfpb[j]==0){
+          httpd.vfpb[j]=2;
+          httpd.vfp[j] = Activator.CreateInstance(httpd.vfpa);
+          break;
+        }else if(httpd.vfpb[j]==1){
+          httpd.vfpb[j]=2;
+          break;
+        }
+      }
+    }
+
+    if(j<0){
+      cont1=Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry\r\n");
+    }else if(j<httpd.db){
+      if(Content_Length>0){
+        dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
+        // Ограничение на размер потока определяется возможностями VFP на размер строки
+        if(Content_Type.LastIndexOf("form-")<0 || Content_Length>16777184){
+          filename=valStr(ref Content_Disposition,"filename");
+          if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
+          filename = dirname+"/"+filename;
+        }
+      }
+      httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
+      httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+beforStr9(ref res,"/")+"\"))");
+      httpd.vfp[j].SetVar("SCRIPT_FILENAME",res);
+      httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
+      httpd.vfp[j].SetVar("HTTP_COOKIE",Cookie);
+      httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
+      httpd.vfp[j].SetVar("POST_FILENAME",filename);
+      httpd.vfp[j].SetVar("ERROR_MESS","");
+      httpd.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
+
+      if(Content_Length>0){
+        Task ft = null;
+        FileStream file = null;
+        // R2==0 означает, что не все данные со входа Stream прочитаны
+        if(k>0 && k<i){
+          i = i-k;
+        }else{
+          k=0;
+          i = await Stream.ReadAsync(bytes,k,bytes.Length);
+        }
+        if (filename.Length>0){
+          // Открыть файл, если он не открыт
+          if (File.Exists(filename)){
+            File.Delete(filename);
+          }else if(!Directory.Exists(dirname)){
+            Directory.CreateDirectory(dirname);
+          }
+          file = new FileStream(filename,FileMode.Create);
+        }
+
+        while (N<Content_Length){
+          if(filename.Length>0){
+            if(i>0){
+              ft = file.WriteAsync(bytes,k,i);
+            }else{
+              R2=1;
+            }
+          }else{
+            // Всё записывать в поток
+            if(i>0){
+              bytes1+=Edos.GetString(bytes,k,i);
+            }else{
+              R2=1;
+            }
+          }
+          if(bytes1.Length>0){
+            // Это записать в поток, не в файл
+            stdin+=bytes1;
+            bytes1="";
+          }
+          N+=i;
+          if(N<Content_Length){
+            if(R2==0){
+              if (ft != null) await ft;
+              i = await Stream.ReadAsync(bytes,0,bytes.Length);
+            }else{
+              N=Content_Length;
+            }
+          }
+        }
+        if (ft != null) await ft;
+        if (file != null && file.CanRead) file.Close();
+      }
+      httpd.vfp[j].SetVar("STD_INPUT",stdin);
+      cont1=Ewin.GetBytes(head+httpd.vfp[j].Eval(beforStr9(ref prg,".prg")+"()")+"\r\n");
+
+      // Подготовим VFP к новым заданиям
+      httpd.vfp[j].DoCmd("on erro _box=_box");
+      httpd.vfp[j].DoCmd("clea even");
+      httpd.vfp[j].DoCmd("clea all");
+      httpd.vfp[j].DoCmd("clos data all");
+      httpd.vfp[j].DoCmd("clos all");
+      httpd.vfp[j].DoCmd("on shut");
+      httpd.vfpb[j]=1;
+
+    }else{
+      cont1=Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy\r\n");
+    }
+    await Stream.WriteAsync(cont1,0,cont1.Length);
   }
 
 }
@@ -598,7 +724,7 @@ class main{
   }
 
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, p9=65535, q9=2147483647, s9=15383, post9=33554432,
+    int i, k, b9=131072, db9=80, p9=65535, q9=2147483647, s9=15383, post9=33554432,
               less9=524288, log1=80;
     bool l=true;
     // Разбор параметров
@@ -636,6 +762,13 @@ class main{
           httpd.st=(k > 0 && k <= s9)? k : s9;
         }            
         break;
+      case "-db":
+        i++;
+        if(i < Args.Length){
+          k=int.Parse(Args[i]);
+          httpd.db=(k >= 0 && k <= db9)? k : db9;
+        }            
+        break;
       case "-log":
         i++;
         if(i < Args.Length){
@@ -659,7 +792,8 @@ class main{
         break;
       case "-d":
         i++;
-        if(i < Args.Length) httpd.DocumentRoot=Args[i];
+        if(i < Args.Length) httpd.DocumentRoot=
+          (Args[i].EndsWith("/")||Args[i].EndsWith("\\"))?Args[i]:Args[i]+"/";
         break;
       case "-i":
         i++;
@@ -678,7 +812,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.8, (C) kornienko.ru март 2024.
+        Console.Write(@"Многопоточный http.net сервер версия 1.81, (C) kornienko.ru март 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
@@ -703,6 +837,10 @@ class main{
              заданных параметром -s. Если сумма обрабатываемых и ожидающих
              в очереди запросов будет превышена, то клиенту посылается
              отказ в обслуживании.
+     -db     Максимальное количество динамически запускаемых экземпляров      "+httpd.db.ToString()+@"
+             СУБД VFP. Расширение скриптов для запуска СУБД - prg. Процессы
+             запускаются по мере одновременного обращения клиентов до
+             заданного значения.
      -log    Размер журнала регистрации запросов в строках. Журнал состоит    "+httpd.log9.ToString()+@"
              из двух чередующихся версий http.net.x.log и http.net.y. Если
              задан размер менее "+log1.ToString()+@", то журнал не ведётся.
