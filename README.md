@@ -76,6 +76,7 @@ Processing of wsf scripts with a handler is provided cscript.exe. In the http se
   stdout= stdout + "ERROR_MESS=" + ERROR_MESS
 return c13+stdout
 ```
+[screenShots/2024-03-21 152713.png] The visual result of the prg script
 ### История версий
 В папке httpd всегда можно скачать последнюю рабочую версию: http.net.exe.  
   
