@@ -571,7 +571,7 @@ value2
 
     // Вывод полученных данных wsf-скрипта
     cont=Proc.StandardOutput.ReadToEnd();
-    cont1=Edos.GetBytes(head+cont+"\r\n");
+    cont1=Edos.GetBytes(head+cont);
 
     await Stream.WriteAsync(cont1,0,cont1.Length);
 
@@ -601,7 +601,7 @@ value2
     }
 
     if(j<0){
-      cont1=Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry\r\n");
+      cont1=Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry");
     }else if(j<httpd.db){
       if(Content_Length>0){
         dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
@@ -676,7 +676,7 @@ value2
         if (file != null && file.CanRead) file.Close();
       }
       httpd.vfp[j].SetVar("STD_INPUT",stdin);
-      cont1=Ewin.GetBytes(head+httpd.vfp[j].Eval(beforStr9(ref prg,".prg")+"()")+"\r\n");
+      cont1=Ewin.GetBytes(head+httpd.vfp[j].Eval(beforStr9(ref prg,".prg")+"()"));
 
       // Подготовим VFP к новым заданиям
       httpd.vfp[j].DoCmd("on erro _box=_box");
@@ -688,7 +688,7 @@ value2
       httpd.vfpb[j]=1;
 
     }else{
-      cont1=Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy\r\n");
+      cont1=Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
     }
     await Stream.WriteAsync(cont1,0,cont1.Length);
   }
@@ -812,7 +812,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.81, (C) kornienko.ru март 2024.
+        Console.Write(@"Многопоточный http.net сервер версия 1.82, (C) kornienko.ru март 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
