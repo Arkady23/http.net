@@ -42,7 +42,7 @@ public class httpd{
     for(i=0; i<st; i++) Session[i] = new Session(Server);
   }
   public void StopServer(){
-    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) vfp[i].Quit();
+    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){}
     logi=log9+8888;
     log9=0;
     if(logFS!=null){
@@ -676,7 +676,8 @@ value2
         if (file != null && file.CanRead) file.Close();
       }
       httpd.vfp[j].SetVar("STD_INPUT",stdin);
-      cont1=Ewin.GetBytes(head+httpd.vfp[j].Eval(beforStr9(ref prg,".prg")+"()"));
+      cont1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
+            GetBytes(head+httpd.vfp[j].Eval(beforStr9(ref prg,".prg")+"()"));
 
       // Подготовим VFP к новым заданиям
       httpd.vfp[j].DoCmd("on erro _box=_box");
@@ -812,7 +813,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.82, (C) kornienko.ru март 2024.
+        Console.Write(@"Многопоточный http.net сервер версия 1.83, (C) kornienko.ru март 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
