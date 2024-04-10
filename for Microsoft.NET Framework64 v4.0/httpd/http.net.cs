@@ -64,6 +64,7 @@ class Session{
                  QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
+  private Task AddCache = null;
 
   public Session(Socket Server){
     Accept(Server);
@@ -417,10 +418,15 @@ class Session{
       found=0;
     }else{
       try{
-        httpd.Files.Add(key, new byte[NN]);
-        found = 7;
+        if(httpd.Files.ContainsKey(key)){
+          found = 1;
+        }else{
+          found = 7;
+          if(AddCache!=null) await AddCache;
+          AddCache = Task.Run(() => httpd.Files.Add(key, new byte[NN]));
+        }
       }catch (ArgumentException){
-        found = 1;
+        found = 7;
       }
     }
     if(found == 1){
