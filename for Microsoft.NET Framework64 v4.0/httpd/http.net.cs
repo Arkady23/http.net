@@ -30,7 +30,7 @@ public class httpd{
   Session[] Session = null;
   
   public void RunServer(){
-    ThreadPool.SetMinThreads(4,8);
+    ThreadPool.SetMinThreads(4,16);
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
     Session = new Session[st];
