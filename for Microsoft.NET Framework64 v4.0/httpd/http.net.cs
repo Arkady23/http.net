@@ -39,7 +39,7 @@ public class httpd{
     vfpb = new byte[db];
     Server.Bind(ep);
     Server.Listen(qu);
-    for(i=0; i<st; i++) Session[i] = new Session(Server);
+    for(i=0; i<st; i++) Task.Run(() => Session[i] = new Session(Server));
   }
   public void StopServer(){
     if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){}
