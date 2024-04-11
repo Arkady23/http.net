@@ -60,7 +60,7 @@ class Session{
   Encoding Edos = Encoding.GetEncoding(28591);
   Encoding Ewin = Encoding.GetEncoding(httpd.cp);
   private int i,k,Content_Length;
-  private string bytes1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
+  private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
                  QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
@@ -98,18 +98,18 @@ class Session{
       Port=Point.Port.ToString();
       x1=dt+"\t"+IP+" "+Port+"\t";
       bytes = new Byte[i];
-      bytes1=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING=Cookie=
+      cont1=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING=Cookie=
              Referer=Origin=User_Agent=Accept_Language="";
 
       while (i>0 && l>0){
         if(k>0){
-          bytes1=Edos.GetString(bytes,k,i-k);
+          cont1=Edos.GetString(bytes,k,i-k);
           k=0;
         }
         i = await Stream.ReadAsync(bytes, 0, bytes.Length);
 
         if(i>0){
-          l = getHeaders(Edos, ref bytes, ref bytes1, ref k, ref reso, ref Host,
+          l = getHeaders(Edos, ref bytes, ref cont1, ref k, ref reso, ref Host,
                          ref User_Agent, ref Referer, ref Accept_Language, ref Origin,
                          ref Cookie, ref Content_Type, ref Content_Disposition,
                          ref Content_Length);
@@ -253,10 +253,10 @@ class Session{
     return L;
   }
 
-  static string line1(Encoding Edos, ref byte[] bytes, ref string bytes1, ref int k, ref byte b){
+  static string line1(Encoding Edos, ref byte[] bytes, ref string cont1, ref int k, ref byte b){
     int i;
-    string z=bytes1;
-    bytes1="";
+    string z=cont1;
+    cont1="";
     b=1;
 
     for (i = k; i < bytes.Length; i++){
@@ -279,13 +279,13 @@ class Session{
     return z;
   }
 
-  static byte getHeaders(Encoding Edos, ref byte[] bytes, ref string bytes1, ref int k, ref string reso,
+  static byte getHeaders(Encoding Edos, ref byte[] bytes, ref string cont1, ref int k, ref string reso,
                  ref string Host, ref string User_Agent, ref string Referer,
                  ref string Accept_Language, ref string Origin, ref string Cookie,
                  ref string Content_Type, ref string Content_Disposition,
                  ref int Content_Length){
     byte b=0;
-    string lin=line1(Edos, ref bytes, ref bytes1, ref k, ref b),n,h;
+    string lin=line1(Edos, ref bytes, ref cont1, ref k, ref b),n,h;
 
     while (lin.Length>0){
 // Console.WriteLine("lin=|"+lin+"|");
@@ -328,7 +328,7 @@ class Session{
         h=beforStr9(ref h," ");
         reso=ltri(ref h);
       }
-      lin=line1(Edos, ref bytes, ref bytes1, ref k, ref b);
+      lin=line1(Edos, ref bytes, ref cont1, ref k, ref b);
     }
     return b;
   }
@@ -472,7 +472,7 @@ class Session{
 
   async Task send_wsf(System.Net.Sockets.NetworkStream Stream){
     int N=0;
-    byte[] cont1;
+    byte[] bytes1;
     string cont, dirname="", filename="";
     var wsf = new ProcessStartInfo();
 
@@ -548,16 +548,16 @@ value2
         }else{
           // Всё записывать в поток
           if(i>0){
-            bytes1+=Edos.GetString(bytes,k,i);
+            cont1+=Edos.GetString(bytes,k,i);
           }else{
             R2=1;
           }
         }
-        if(bytes1.Length>0){
+        if(cont1.Length>0){
           // Это записать в поток, не в файл
           if (swt != null) await swt;
-          swt = sw.WriteAsync(bytes1);
-          bytes1="";
+          swt = sw.WriteAsync(cont1);
+          cont1="";
         }
         N+=i;
         if(N<Content_Length){
@@ -577,9 +577,9 @@ value2
 
     // Вывод полученных данных wsf-скрипта
     cont=Proc.StandardOutput.ReadToEnd();
-    cont1=Edos.GetBytes(head+cont);
+    bytes1=Edos.GetBytes(head+cont);
 
-    await Stream.WriteAsync(cont1,0,cont1.Length);
+    await Stream.WriteAsync(bytes1,0,bytes1.Length);
 
     Proc.WaitForExit();
     // Освободить ресурсы
@@ -588,7 +588,7 @@ value2
 
   async Task send_prg(System.Net.Sockets.NetworkStream Stream){
     int j=-1, N=0;
-    byte[] cont1;
+    byte[] bytes1;
     string prg=afterStr9(ref res,"/"), dirprg=System.IO.Path.GetDirectoryName(
            System.Reflection.Assembly.GetEntryAssembly().Location),dirname="",
            filename="";
@@ -607,7 +607,7 @@ value2
     }
 
     if(j<0){
-      cont1=Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry");
+      bytes1=Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry");
     }else if(j<httpd.db){
       if(Content_Length>0){
         dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
@@ -658,7 +658,7 @@ value2
           }else{
             // Всё записывать в поток
             if(i>0){
-              bytes1+=Edos.GetString(bytes,k,i);
+              cont1+=Edos.GetString(bytes,k,i);
             }else{
               R2=1;
             }
@@ -676,8 +676,8 @@ value2
         if (ft != null) await ft;
         if (file != null && file.CanRead) file.Close();
       }
-      httpd.vfp[j].SetVar("STD_INPUT",bytes1);
-      cont1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
+      httpd.vfp[j].SetVar("STD_INPUT",cont1);
+      bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
             GetBytes(head+httpd.vfp[j].Eval(beforStr9(ref prg,".prg")+"()"));
 
       // Подготовим VFP к новым заданиям
@@ -688,12 +688,12 @@ value2
       httpd.vfp[j].DoCmd("clos all");
       httpd.vfp[j].DoCmd("on shut");
       httpd.vfpb[j]=1;
-      bytes1="";
+      cont1="";
 
     }else{
-      cont1=Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
+      bytes1=Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
     }
-    await Stream.WriteAsync(cont1,0,cont1.Length);
+    await Stream.WriteAsync(bytes1,0,bytes1.Length);
   }
 
 }
