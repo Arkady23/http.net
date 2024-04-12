@@ -71,9 +71,9 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    if(httpd.log9>0 && !(httpd.logFS!=null)){
+    Task LogAsync = Task.Run(() => { if(httpd.log9>0 && !(httpd.logFS!=null))
       R1=log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t\tThe http-server is running...");
-    }
+    });
     await AcceptProc(await Server.AcceptAsync(), Server);
   }
 
@@ -114,7 +114,7 @@ class Session{
       res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
 
       if(R>0){
-        R1=log(x1+res);
+        Task LogAsync = Task.Run(() => {R1=log(x1+res);} );
         head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
         if(R>1){
           if(File.Exists(res)){
@@ -174,14 +174,12 @@ class Session{
 
       // Записать в файл
       try{
-        Task LogFlush = Task.Run(async delegate{
-          Console.WriteLine(x);
-          await Task.Delay(3000);
-          if(httpd.DTi+30000000<DateTime.UtcNow.Ticks){
-            httpd.logSW.Flush();
-            httpd.logFS.Flush();
-          }
-        });
+        Console.WriteLine(x);
+        Thread.Sleep(3000);
+        if(httpd.DTi+30000000<DateTime.UtcNow.Ticks){
+          httpd.logSW.Flush();
+          httpd.logFS.Flush();
+        }
       }catch(IOException){
         return 1;
       }
