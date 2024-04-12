@@ -174,8 +174,8 @@ class Session{
 
       // Записать в файл
       try{
-        Console.WriteLine(x);
         Task LogFlush = Task.Run(async delegate{
+          Console.WriteLine(x);
           await Task.Delay(3000);
           if(httpd.DTi+30000000<DateTime.UtcNow.Ticks){
             httpd.logSW.Flush();
