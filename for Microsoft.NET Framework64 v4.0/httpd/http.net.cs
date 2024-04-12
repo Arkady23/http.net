@@ -71,16 +71,9 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    Interlocked.Exchange(ref httpd.DTi,DateTime.UtcNow.Ticks);
     if(httpd.log9>0 && !(httpd.logFS!=null)){
       R1=log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t\tThe http-server is running...");
-      httpd.logSW.Flush();
-      httpd.logFS.Flush();
     }
-    var LogFlush = Task.Run(async delegate{
-      await Task.Delay(3000);
-      if(httpd.DTi+30000000<DateTime.UtcNow.Ticks) httpd.logSW.Flush();
-    });
     await AcceptProc(await Server.AcceptAsync(), Server);
   }
 
@@ -157,6 +150,7 @@ class Session{
     // Сначала писать в X, затем в Y, затем снова в X и т.д.
 
     if(httpd.log9>0){
+      Interlocked.Exchange(ref httpd.DTi,DateTime.UtcNow.Ticks);
 
       // Нужно ли начать запись с начала журнала?
       if(httpd.logi>=httpd.log9 && httpd.logFS!=null){
@@ -181,6 +175,13 @@ class Session{
       // Записать в файл
       try{
         Console.WriteLine(x);
+        Task LogFlush = Task.Run(async delegate{
+          await Task.Delay(3000);
+          if(httpd.DTi+30000000<DateTime.UtcNow.Ticks){
+            httpd.logSW.Flush();
+            httpd.logFS.Flush();
+          }
+        });
       }catch(IOException){
         return 1;
       }
