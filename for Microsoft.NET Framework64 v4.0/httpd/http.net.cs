@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 public class httpd{
   public static int port=8080, qu=8888, bu=16384, st=8888, db=22, log9=10000,
-                    post=33554432, le=524288, cp=1251, logi=0, i;
+                    post=33554432, le=524288, cp=1251, logi=0, i, MinT, MaxT;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -31,7 +31,6 @@ public class httpd{
   Session[] Session = null;
   
   public void RunServer(){
-    ThreadPool.SetMinThreads(4,16);
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
     Session = new Session[st];
@@ -40,7 +39,12 @@ public class httpd{
     vfpb = new byte[db];
     Server.Bind(ep);
     Server.Listen(qu);
-    for(i=0; i<st; i++) Task.Run(() => Session[i] = new Session(Server));
+    Task.Run(() => Session[0] = new Session(Server));
+    ThreadPool.GetMinThreads(out MinT, out MaxT);
+    i=MinT*8;
+    Thread.Sleep(23);
+    if(MaxT<i) ThreadPool.SetMinThreads(MinT,i);
+    for(i=1; i<st; i++) Task.Run(() => Session[i] = new Session(Server));
   }
   public void StopServer(){
     notexit=false;
