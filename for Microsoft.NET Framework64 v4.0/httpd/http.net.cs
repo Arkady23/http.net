@@ -25,6 +25,7 @@ public class httpd{
   public static TextWriter TE = null;
   public static dynamic[] vfp = null;
   public static byte[] vfpb = null;
+  public static bool notexit=true;
   public static long DTi;
   Socket Server = null;
   Session[] Session = null;
@@ -42,9 +43,8 @@ public class httpd{
     for(i=0; i<st; i++) Task.Run(() => Session[i] = new Session(Server));
   }
   public void StopServer(){
+    notexit=false;
     if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){}
-    logi=log9+8888;
-    log9=0;
     if(logFS!=null){
       // Восстановить вывод на консоль
       Console.SetError(TE);
@@ -71,10 +71,9 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    Task LogAsync = Task.Run(() => { if(httpd.log9>0 && !(httpd.logFS!=null))
+    if(httpd.log9>0 && !(httpd.logFS!=null))
       R1=log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t\tThe http-server is running...");
-    });
-    await AcceptProc(await Server.AcceptAsync(), Server);
+    while (httpd.notexit) await AcceptProc(await Server.AcceptAsync(), Server);
   }
 
   public async Task AcceptProc(Socket Client, Socket Server){
@@ -139,9 +138,6 @@ class Session{
       }
       Stream.Close();
 //      while(R1!=0) if((R1=log(x1+res)) !=0) Thread.Sleep(23);
-    }
-    if(httpd.logi<httpd.log9){
-      Task RunAccept = Task.Run(()=>Accept(Server));
     }
   }
 
@@ -821,7 +817,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.91, (C) kornienko.ru апрель 2024.
+        Console.Write(@"Многопоточный http.net сервер версия 1.92, (C) kornienko.ru апрель 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
