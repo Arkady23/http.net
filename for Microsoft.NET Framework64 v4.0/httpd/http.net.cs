@@ -39,16 +39,15 @@ public class httpd{
     vfpb = new byte[db];
     Server.Bind(ep);
     Server.Listen(qu);
-    Task.Run(() => Session[0] = new Session(Server));
+    if(log9>0)
+      log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t\tThe http-server is running...");
+    Thread.Sleep(23);
     ThreadPool.GetMinThreads(out MinT, out MaxT);
     i=MinT*8;
-    Thread.Sleep(23);
     if(MaxT<i) ThreadPool.SetMinThreads(MinT,i);
-//    for(i=1; i<st; i++) Task.Run(() => Session[i] = new Session(Server));
-    Parallel.For(1,st,j => { Session[j] = new Session(Server); });
-
-
+    Parallel.For(0,st,j => { Session[j] = new Session(Server); });
   }
+
   public void StopServer(){
     notexit=false;
     if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){}
@@ -58,6 +57,47 @@ public class httpd{
       Console.SetOut(TW);
       logSW.Close();
     }
+  }
+
+  public static byte log(string x){
+    // Добавить сообщение в журнал с чередующимися версиями.
+    // Сначала писать в X, затем в Y, затем снова в X и т.д.
+
+    if(log9>0){
+      Interlocked.Exchange(ref DTi,DateTime.UtcNow.Ticks);
+
+      // Нужно ли начать запись с начала журнала?
+      if(logi>=log9 && logFS!=null){
+        Interlocked.Exchange(ref logi,1);
+        logFS.Seek(0,SeekOrigin.Begin);
+      }else{
+        Interlocked.Increment(ref logi);
+      }
+
+      if(!(logFS!=null)){
+        // Отправка вывода на консоль в файл:
+        logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
+        logFS = new FileStream(logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
+        TW = Console.Out;
+        TE = Console.Error;
+        logSW = new StreamWriter(logFS);
+        Console.SetOut(logSW);
+        Console.SetError(logSW);
+      }
+
+      // Записать в файл
+      try{
+        Console.WriteLine(x);
+        Thread.Sleep(3000);
+        if(DTi+30000000<DateTime.UtcNow.Ticks){
+          logSW.Flush();
+          logFS.Flush();
+        }
+      }catch(IOException){
+        return 1;
+      }
+    }
+    return 0;
   }
 }
 
@@ -78,8 +118,6 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    if(httpd.log9>0 && !(httpd.logFS!=null))
-      R1=log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t\tThe http-server is running...");
     while (httpd.notexit) await AcceptProc(await Server.AcceptAsync(), Server);
   }
 
@@ -120,7 +158,7 @@ class Session{
       res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
 
       if(R>0){
-        Task LogAsync = Task.Run(() => {R1=log(x1+res);} );
+        Task LogAsync = Task.Run(() => { R1=httpd.log(x1+res); } );
         head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
         if(R>1){
           if(File.Exists(res)){
@@ -144,50 +182,8 @@ class Session{
         }
       }
       Stream.Close();
-//      while(R1!=0) if((R1=log(x1+res)) !=0) Thread.Sleep(23);
+//      while(R1!=0) if((R1=httpd.log(x1+res)) !=0) Thread.Sleep(23);
     }
-  }
-
-  static byte log(string x){
-    // Добавить сообщение в журнал с чередующимися версиями.
-    // Сначала писать в X, затем в Y, затем снова в X и т.д.
-
-    if(httpd.log9>0){
-      Interlocked.Exchange(ref httpd.DTi,DateTime.UtcNow.Ticks);
-
-      // Нужно ли начать запись с начала журнала?
-      if(httpd.logi>=httpd.log9 && httpd.logFS!=null){
-        Interlocked.Exchange(ref httpd.logi,1);
-        httpd.logFS.Seek(0,SeekOrigin.Begin);
-      }else{
-        Interlocked.Increment(ref httpd.logi);
-      }
-
-      if(!(httpd.logFS!=null)){
-        // Отправка вывода на консоль в файл:
-        httpd.logZ=(File.GetLastWriteTime(httpd.logX)<=File.GetLastWriteTime(httpd.logY))?
-                    httpd.logX : httpd.logY;
-        httpd.logFS = new FileStream(httpd.logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
-        httpd.TW = Console.Out;
-        httpd.TE = Console.Error;
-        httpd.logSW = new StreamWriter(httpd.logFS);
-        Console.SetOut(httpd.logSW);
-        Console.SetError(httpd.logSW);
-      }
-
-      // Записать в файл
-      try{
-        Console.WriteLine(x);
-        Thread.Sleep(3000);
-        if(httpd.DTi+30000000<DateTime.UtcNow.Ticks){
-          httpd.logSW.Flush();
-          httpd.logFS.Flush();
-        }
-      }catch(IOException){
-        return 1;
-      }
-    }
-    return 0;
   }
 
   static string ltri(ref string x){
@@ -291,7 +287,7 @@ class Session{
 
     while (lin.Length>0){
 // Console.WriteLine("lin=|"+lin+"|");
-// log(lin);
+// httpd.log(lin);
       h=afterStr1(ref lin,":");
       h=ltri(ref h);
       if(h.Length>0){
