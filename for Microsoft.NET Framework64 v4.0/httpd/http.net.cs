@@ -45,7 +45,7 @@ public class httpd{
     ThreadPool.GetMinThreads(out MinT, out MaxT);
     i=MinT*8;
     if(MaxT<i) ThreadPool.SetMinThreads(MinT,i);
-    Parallel.For(0,st,j => { Session[j] = new Session(Server); });
+    Parallel.For(0,st,j => { Session[j] = new Session(Server,j); });
   }
 
   public void StopServer(){
@@ -113,7 +113,10 @@ class Session{
   private byte l, R, R1, R2;
   private Task AddCache = null;
 
-  public Session(Socket Server){
+  public Session(Socket Server, int sn){
+//    if(httpd.log9>0) Task.Run(() => {
+//      httpd.log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+
+//      "\t\tStream number "+sn.ToString()+" is running..."); } );
     Accept(Server);
   }
 
@@ -424,7 +427,7 @@ class Session{
           AddCache = Task.Run(() => httpd.Files.Add(key, new byte[NN]));
         }
       }catch (ArgumentException){
-        found = 7;
+        found = 0;
       }
     }
     if(found == 1){
