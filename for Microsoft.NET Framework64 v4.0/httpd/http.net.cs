@@ -44,7 +44,10 @@ public class httpd{
     i=MinT*8;
     Thread.Sleep(23);
     if(MaxT<i) ThreadPool.SetMinThreads(MinT,i);
-    for(i=1; i<st; i++) Task.Run(() => Session[i] = new Session(Server));
+//    for(i=1; i<st; i++) Task.Run(() => Session[i] = new Session(Server));
+    Parallel.For(1,st,j => { Session[j] = new Session(Server); });
+
+
   }
   public void StopServer(){
     notexit=false;
