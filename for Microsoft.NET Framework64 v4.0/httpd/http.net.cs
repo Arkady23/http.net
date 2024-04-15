@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 public class httpd{
   public static int port=8080, qu=8888, bu=16384, st=8888, db=22, log9=10000,
-                    post=33554432, le=524288, cp=1251, logi=0, i, MinT, MaxT;
+                    post=33554432, le=524288, cp=1251, logi=0, i, k;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -39,12 +39,11 @@ public class httpd{
     vfpb = new byte[db];
     Server.Bind(ep);
     Server.Listen(qu);
-    if(log9>0)
-      log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t\tThe http-server is running...");
+    if(log9>0) log("\tThe http-server is running...");
     Thread.Sleep(23);
-    ThreadPool.GetMinThreads(out MinT, out MaxT);
-    i=MinT*8;
-    if(MaxT<i) ThreadPool.SetMinThreads(MinT,i);
+    ThreadPool.GetMinThreads(out i, out k);
+    i*=8; k*=8;
+    ThreadPool.SetMinThreads(i,k);
     Parallel.For(0,st,j => { Session[j] = new Session(Server,j); });
   }
 
@@ -59,45 +58,47 @@ public class httpd{
     }
   }
 
-  public static byte log(string x){
+  public static void log(object x){
     // Добавить сообщение в журнал с чередующимися версиями.
     // Сначала писать в X, затем в Y, затем снова в X и т.д.
+    Interlocked.Exchange(ref DTi,DateTime.UtcNow.Ticks);
 
-    if(log9>0){
-      Interlocked.Exchange(ref DTi,DateTime.UtcNow.Ticks);
-
-      // Нужно ли начать запись с начала журнала?
-      if(logi>=log9 && logFS!=null){
-        Interlocked.Exchange(ref logi,1);
-        logFS.Seek(0,SeekOrigin.Begin);
-      }else{
-        Interlocked.Increment(ref logi);
-      }
-
-      if(!(logFS!=null)){
-        // Отправка вывода на консоль в файл:
-        logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
-        logFS = new FileStream(logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
-        TW = Console.Out;
-        TE = Console.Error;
-        logSW = new StreamWriter(logFS);
-        Console.SetOut(logSW);
-        Console.SetError(logSW);
-      }
-
-      // Записать в файл
-      try{
-        Console.WriteLine(x);
-        Thread.Sleep(3000);
-        if(DTi+30000000<DateTime.UtcNow.Ticks){
-          logSW.Flush();
-          logFS.Flush();
-        }
-      }catch(IOException){
-        return 1;
-      }
+    // Нужно ли начать запись с начала журнала?
+    if(logi>=log9 && logFS!=null){
+      Interlocked.Exchange(ref logi,1);
+      logFS.Seek(0,SeekOrigin.Begin);
+    }else{
+      Interlocked.Increment(ref logi);
     }
-    return 0;
+
+    if(!(logFS!=null)){
+      // Отправка вывода на консоль в файл:
+      logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
+      logFS = new FileStream(logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
+      TW = Console.Out;
+      TE = Console.Error;
+      logSW = new StreamWriter(logFS);
+      Console.SetOut(logSW);
+      Console.SetError(logSW);
+    }
+
+    // Записать в файл
+    try{
+      Console.WriteLine(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t"+x);
+      Thread.Sleep(3000);
+      if(DTi+30000000<DateTime.UtcNow.Ticks){
+        logSW.Flush();
+        logFS.Flush();
+      }
+    }catch(IOException){
+      Thread.Sleep(23); log2(x+"");
+    }
+  }
+
+  public static void log2(string x){
+    Thread log2 = new Thread(log);
+    log2.Priority = ThreadPriority.BelowNormal;
+    log2.Start(x);
   }
 }
 
@@ -114,9 +115,7 @@ class Session{
   private Task AddCache = null;
 
   public Session(Socket Server, int sn){
-//    if(httpd.log9>0) Task.Run(() => {
-//      httpd.log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+
-//      "\t\tStream number "+sn.ToString()+" is running..."); } );
+//    if(httpd.log9>0) httpd.log2("\tStream number "+sn.ToString()+" is running...");
     Accept(Server);
   }
 
@@ -128,7 +127,6 @@ class Session{
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       string dt1=DateTime.UtcNow.ToString("R"),
-             dt=DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff"),
              Content_T=CT+": text/plain\r\n";
       l=1;
       R=R1=R2=0;
@@ -136,7 +134,7 @@ class Session{
       k=Content_Length=0;
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
-      x1=dt+"\t"+IP+" "+Port+"\t";
+      x1=IP+" "+Port+"\t";
       bytes = new Byte[i];
       cont1=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING=Cookie=
              Referer=Origin=User_Agent=Accept_Language="";
@@ -161,7 +159,7 @@ class Session{
       res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
 
       if(R>0){
-        Task LogAsync = Task.Run(() => { R1=httpd.log(x1+res); } );
+        if(httpd.log9>0) httpd.log2(x1+res);
         head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
         if(R>1){
           if(File.Exists(res)){
@@ -185,7 +183,6 @@ class Session{
         }
       }
       Stream.Close();
-//      while(R1!=0) if((R1=httpd.log(x1+res)) !=0) Thread.Sleep(23);
     }
   }
 
@@ -418,16 +415,15 @@ class Session{
     if(NN > httpd.le){
       found=0;
     }else{
-      try{
-        if(httpd.Files.ContainsKey(key)){
-          found = 1;
-        }else{
-          found = 7;
-          if(AddCache!=null) await AddCache;
-          AddCache = Task.Run(() => httpd.Files.Add(key, new byte[NN]));
-        }
-      }catch (ArgumentException){
-        found = 0;
+      if(AddCache!=null) await AddCache;
+      if(httpd.Files.ContainsKey(key)){
+        found = 1;
+      }else{
+        found = 7;
+        AddCache = Task.Run(() =>{
+          try{ httpd.Files.Add(key, new byte[NN]);
+          }catch (ArgumentException){}
+        });
       }
     }
     if(found == 1){
@@ -443,6 +439,7 @@ class Session{
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
+            await AddCache;
             Array.Copy(bytes,k,httpd.Files[key],m,i);
             m+=i;
           }
@@ -823,7 +820,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.93, (C) kornienko.ru апрель 2024.
+        Console.Write(@"Многопоточный http.net сервер версия 1.94, (C) kornienko.ru апрель 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
