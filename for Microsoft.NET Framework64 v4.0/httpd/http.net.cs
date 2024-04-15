@@ -11,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 public class httpd{
-  public static int port=8080, qu=8888, bu=16384, st=8888, db=22, log9=10000,
+  public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000,
                     post=33554432, le=524288, cp=1251, logi=0, i, k;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
@@ -42,12 +42,9 @@ public class httpd{
     if(log9>0) log("\tThe http-server is running...");
     Thread.Sleep(23);
     ThreadPool.GetMinThreads(out i, out k);
-    if(st>i){
-      k = 128;
-      if(st<k) k = st;
-      ThreadPool.SetMinThreads(k,k);
-    }
+    if(st>i) ThreadPool.SetMinThreads(st,st);
     Parallel.For(0,st,j => { Session[j] = new Session(Server,j); });
+    if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
   }
 
   public void StopServer(){
@@ -99,9 +96,11 @@ public class httpd{
   }
 
   public static void log2(string x){
-    Thread log2 = new Thread(log);
-    log2.Priority = ThreadPriority.BelowNormal;
-    log2.Start(x);
+    if(log9>0){
+      Thread log2 = new Thread(log);
+      log2.Priority = ThreadPriority.BelowNormal;
+      log2.Start(x);
+    }
   }
 }
 
@@ -118,7 +117,6 @@ class Session{
   private Task AddCache = null;
 
   public Session(Socket Server, int sn){
-//    if(httpd.log9>0) httpd.log2("\tStream number "+sn.ToString()+" is running...");
     Accept(Server);
   }
 
@@ -162,7 +160,7 @@ class Session{
       res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
 
       if(R>0){
-        if(httpd.log9>0) httpd.log2(x1+res);
+        httpd.log2(x1+res);
         head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
         if(R>1){
           if(File.Exists(res)){
@@ -823,7 +821,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.94, (C) kornienko.ru апрель 2024.
+        Console.Write(@"Многопоточный http.net сервер версия 1.95, (C) kornienko.ru апрель 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
