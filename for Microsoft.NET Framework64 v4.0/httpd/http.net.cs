@@ -42,8 +42,11 @@ public class httpd{
     if(log9>0) log("\tThe http-server is running...");
     Thread.Sleep(23);
     ThreadPool.GetMinThreads(out i, out k);
-    i*=8; k*=8;
-    ThreadPool.SetMinThreads(i,k);
+    if(st>i){
+      k = 128;
+      if(st<k) k = st;
+      ThreadPool.SetMinThreads(k,k);
+    }
     Parallel.For(0,st,j => { Session[j] = new Session(Server,j); });
   }
 
