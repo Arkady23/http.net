@@ -1,8 +1,14 @@
 # http.net
 Multithreaded http.net server on C#.  
+
+The root folder for domains (by default www) must contain folders that match the domain name and subdomain of the requested resource. For example, if the request looks like http://a.kornienko.ru , then there should be a folder named in the root folder for domains a.kornienko.ru. If you need to provide aliases with other names, then you can create a folder in the root folder as a symbolic link to another folder.  
+
+The number of threads should not be set immediately to the maximum possible. If the values are very high, the operating system may block the server operation. In my case, the maximum value at which the server is running steadily turned out to be exactly 1000. The default is 888. You can check how quickly threads are initialized by using the log, which indicates the timestamps of the server startup and the readiness of tasks to receive requests.  
+
+Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
 ```
 D:\work\httpd>http.net /?
-Многопоточный http.net сервер версия 1.94, (C) kornienko.ru апрель 2024.
+Многопоточный http.net сервер версия 1.95, (C) kornienko.ru апрель 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
@@ -19,10 +25,10 @@ D:\work\httpd>http.net /?
              index.html.gz или library.js.gz и т.д.
      -p      Порт, который прослушивает сервер.                               8080
      -b      Размер буферов чтения и записи.                                  16384
-     -s      Количество одновременно обрабатываемых запросов. Максимальное    8888
+     -s      Количество одновременно обрабатываемых запросов. Максимальное    888
              число ограничивается только производительностью процессора и
              размером оперативной памяти.
-     -q      Количество дополнительных запросов, хранящихся в очереди,        8888
+     -q      Количество дополнительных запросов, хранящихся в очереди,        888
              если превышено количество поступивших одновременно запросов,
              заданных параметром -s. Если сумма обрабатываемых и ожидающих
              в очереди запросов будет превышена, то клиенту посылается
@@ -57,9 +63,11 @@ D:\work\httpd>http.net /?
              параметры не заданы, используется параметр //Nologo.
      -ext    Расширение файлов-скриптов.                                      wsf
 ```
-The root folder for domains (by default www) must contain folders that match the domain name and subdomain of the requested resource. For example, if the request looks like http://a.kornienko.ru , then there should be a folder named in the root folder for domains a.kornienko.ru. If you need to provide aliases with other names, then you can create a folder in the root folder as a symbolic link to another folder.  
+Корневая папка для доменов (по умолчанию www) должна содержать папки, соответствующие доменному имени и поддомену запрашиваемого ресурса. Например, если запрос выглядит как http://a.kornienko.ru , то в корневой папке для доменов должна быть папка с именем a.kornienko.ru. Если вам нужно предоставить псевдонимам другие имена, вы можете создать папку в корневой папке в качестве символической ссылки на другую папку.  
 
-Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
+Число потоков не следут задавать сразу максимально возможным. При очень больших значениях операционная система может заблокировать работу сервера. В моем случае максимальное значение при котором сервер работает устойчиво оказалось ровно 1000. По умолчанию — 888. Проверить, как быстро иницилизируются потоки можно по журналу, в котором указываются метки времени запуска сервера и готовности задач к приему запросов.  
+
+Предусмотрена обработка wsf-скриптов с помощью обработчика cscript.exe. В параметрах http-сервера вы можете заменить это расширение скрипта и обработчик на любое другое. Он также обеспечивает обработку prg-скриптов по технологии COM MS с использованием СУБД VFP 9/10(Advanced), а не CGI. COM-объекты создаются по мере выполнения запросов от клиентов с одновременным доступом к максимальному значению, указанному в параметрах сервера. По умолчанию визуальный вывод ошибок в СУБД VFP 9/10(Advanced) отключен. В случае ошибки в prg описание этой ошибки возвращается скрипту в переменной ERROR_MESS. Ниже приведен пример файла prg и результат его работы. А также результат работы с аналогичным файлом prg, но с ошибкой (отсутствует разрыв последней строки ";").
 ```
 * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 *  Тест. Вывод переменных окружения.
@@ -102,3 +110,4 @@ If there is an error in the prg file:
 1.92. Апрель 2024. Увеличена стабильность существования потоков сессий.  
 1.93. Апрель 2024. Заменён класс асинхронного цикла верхнего уровня, порождающего потоки, на класс параллельного выполнения.  
 1.94. Апрель 2024. Увеличено число рабочих потоков. Запмсь в журнал переведена в отдельный поток с меньшим приоритетом.   
+1.95. Апрель 2024. Число рабочих потоков увеличено до максимума, до значения, заданного параметром -s. При этом контроль правильности задания этого параметра ложится на пользователя путем контроля запуска сервера и инициализации задач через журнал.  
