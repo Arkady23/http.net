@@ -43,7 +43,7 @@ public class httpd{
     Thread.Sleep(23);
     ThreadPool.GetMinThreads(out i, out k);
     if(st>i) ThreadPool.SetMinThreads(st,st);
-    Parallel.For(0,st,j => { Session[j] = new Session(Server,j); });
+    Parallel.For(0,st,j => { Session[j] = new Session(Server); });
     if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
   }
 
@@ -116,7 +116,7 @@ class Session{
   private byte l, R, R1, R2;
   private Task AddCache = null;
 
-  public Session(Socket Server, int sn){
+  public Session(Socket Server){
     Accept(Server);
   }
 
@@ -676,9 +676,12 @@ value2
         if (file != null && file.CanRead) file.Close();
       }
       httpd.vfp[j].SetVar("STD_INPUT",cont1);
-      bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
+      try{
+        bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
             GetBytes(head+httpd.vfp[j].Eval(beforStr9(ref prg,".prg")+"()"));
-
+      }catch(Exception e){
+        bytes1=Ewin.GetBytes(head+"\r\nError in VFP: "+e.Message);
+      }
       // Подготовим VFP к новым заданиям
       httpd.vfp[j].DoCmd("on erro _box=_box");
       httpd.vfp[j].DoCmd("clea even");
@@ -821,7 +824,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.Write(@"Многопоточный http.net сервер версия 1.95, (C) kornienko.ru апрель 2024.
+        Console.WriteLine(@"Многопоточный http.net сервер версия 1.95, (C) kornienko.ru апрель 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
@@ -848,9 +851,9 @@ class main{
              отказ в обслуживании.
      -cp     Номер кодовой страницы, используемый для передачи текста.        "+httpd.cp.ToString()+@"
      -db     Максимальное количество динамически запускаемых экземпляров      "+httpd.db.ToString()+@"
-             СУБД VFP. Расширение скриптов для запуска СУБД - prg. Процессы
-             запускаются по мере одновременного обращения клиентов до
-             заданного значения.
+             СУБД MS VFP. Расширение скриптов для запуска СУБД - prg.
+             Процессы запускаются по мере одновременного обращения клиентов
+             до заданного значения.
      -log    Размер журнала регистрации запросов в строках. Журнал состоит    "+httpd.log9.ToString()+@"
              из двух чередующихся версий http.net.x.log и http.net.y. Если
              задан размер менее "+log1.ToString()+@", то журнал не ведётся.
@@ -874,8 +877,7 @@ class main{
      -args   Дополнительные параметры командной строки запуска оброботчика.
              При использовании cscript.exe в случае, если дополнительные
              параметры не заданы, используется параметр //Nologo.
-     -ext    Расширение файлов-скриптов.                                      "+httpd.Ext+@"
-");
+     -ext    Расширение файлов-скриптов.                                      "+httpd.Ext);
         l=false;
         break;
       }
