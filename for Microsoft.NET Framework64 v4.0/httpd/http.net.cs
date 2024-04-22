@@ -611,7 +611,7 @@ value2
       if(Content_Length>0){
         dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
         // Ограничение на размер потока определяется возможностями VFP на размер строки
-        if(Content_Type.LastIndexOf("form-")<0 || Content_Length>16777184){
+        if(Content_Type.LastIndexOf("form-")<0 || Content_Length>67108832){
           filename=valStr(ref Content_Disposition,"filename");
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
           filename = dirname+"/"+filename;
