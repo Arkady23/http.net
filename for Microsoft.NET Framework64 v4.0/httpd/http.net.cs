@@ -102,6 +102,63 @@ public class httpd{
       log2.Start(x);
     }
   }
+
+  public static string ltri(ref string x){
+    return x.TrimStart('\t',' ');
+  }
+
+  public static string beforStr1(ref string x, string Str){
+    int k=0;
+    if(Str.Length>0) k=x.IndexOf(Str);
+    return k<0?x:(k>0?x.Substring(0,k):"");
+  }
+
+  public static string afterStr1(ref string x, string Str){
+    if(Str.Length>0){
+      int k=x.IndexOf(Str);
+      return k<0?"":x.Substring(k+Str.Length);
+    }else{
+      return x;
+    }
+  }
+
+  public static string beforStr9(ref string x, string Str){
+    if(Str.Length>0){
+       int k=x.LastIndexOf(Str);
+       return k<0?x:(k>0?x.Substring(0,k):"");
+    }else{
+       return x;
+    }
+  }
+
+  public static string afterStr9(ref string x, string Str){
+    int k= -1;
+    if(Str.Length>0) k=x.LastIndexOf(Str);
+    return k<0?"":x.Substring(k+Str.Length);
+  }
+
+  // Узнать значение поля в заголовке (может понадобиться при разборе заголовков)
+  public static string valStr(ref string x, string Str){
+    string z="";
+    if(x.Length>0){
+      z=afterStr1(ref x," "+Str+"=");
+      if(z.Length>0){
+        if(z.Substring(0,1)=="\""){
+          z=z.Substring(1);
+          z=beforStr1(ref z,"\"");
+        }else{
+          z=beforStr1(ref z,";");
+        }
+      }
+    }
+    return z;
+  }
+
+  public static int find10(ref byte[] bytes, int i){
+    if(i<bytes.Length && bytes[i]!=10) i=find10(ref bytes,i+1);
+    return i;
+  }
+
 }
 
 class Session{
@@ -187,59 +244,8 @@ class Session{
     }
   }
 
-  static string ltri(ref string x){
-    return x.TrimStart('\t',' ');
-  }
-
-  static string beforStr1(ref string x, string Str){
-    int k=0;
-    if(Str.Length>0) k=x.IndexOf(Str);
-    return k<0?x:(k>0?x.Substring(0,k):"");
-  }
-
-  static string afterStr1(ref string x, string Str){
-    if(Str.Length>0){
-      int k=x.IndexOf(Str);
-      return k<0?"":x.Substring(k+Str.Length);
-    }else{
-      return x;
-    }
-  }
-
-  static string beforStr9(ref string x, string Str){
-    if(Str.Length>0){
-       int k=x.LastIndexOf(Str);
-       return k<0?x:(k>0?x.Substring(0,k):"");
-    }else{
-       return x;
-    }
-  }
-
-  static string afterStr9(ref string x, string Str){
-    int k= -1;
-    if(Str.Length>0) k=x.LastIndexOf(Str);
-    return k<0?"":x.Substring(k+Str.Length);
-  }
-
   static void putCT(ref string c, string x){
     c=CT+": "+x+"\r\n";
-  }
-
-  // Узнать значение поля в заголовке (может понадобиться при разборе заголовков)
-  static string valStr(ref string x, string Str){
-    string z="";
-    if(x.Length>0){
-      z=afterStr1(ref x," "+Str+"=");
-      if(z.Length>0){
-        if(z.Substring(0,1)=="\""){
-          z=z.Substring(1);
-          z=beforStr1(ref z,"\"");
-        }else{
-          z=beforStr1(ref z,";");
-        }
-      }
-    }
-    return z;
   }
 
   static bool gzExists(ref string res, ref string head){
@@ -253,27 +259,18 @@ class Session{
   }
 
   static string line1(Encoding Edos, ref byte[] bytes, ref string cont1, ref int k, ref byte b){
-    int i;
+    int i,j;
     string z=cont1;
     cont1="";
-    b=1;
-
-    for (i = k; i < bytes.Length; i++){
-      if(bytes[i]==13){
-        if(i+1 < bytes.Length){
-          if(bytes[i+1]==10){
-            z+=Edos.GetString(bytes,k,i-k);
-            k+=i-k+2;
-            b=0;
-            break;
-          }
-        }
-      }else if(bytes[i]==10){
-        z+=Edos.GetString(bytes,k,i-k);
-        k+=i-k+1;
-        b=0;
-        break;
-      }
+    i=httpd.find10(ref bytes,k);
+    if(i<bytes.Length){
+      j=i-k;
+      if(i>0 && bytes[i-1]==13) j--;
+      z+=Edos.GetString(bytes,k,j);
+      k=i+1;
+      b=0;
+    }else{
+      b=1;
     }
     return z;
   }
@@ -289,10 +286,10 @@ class Session{
     while (lin.Length>0){
 // Console.WriteLine("lin=|"+lin+"|");
 // httpd.log(lin);
-      h=afterStr1(ref lin,":");
-      h=ltri(ref h);
+      h=httpd.afterStr1(ref lin,":");
+      h=httpd.ltri(ref h);
       if(h.Length>0){
-        n=beforStr1(ref lin,":");
+        n=httpd.beforStr1(ref lin,":");
         switch(n){
         case "Host":
           Host=h;
@@ -323,9 +320,9 @@ class Session{
           break;
         }
       }else{
-        h=afterStr1(ref lin," ");
-        h=beforStr9(ref h," ");
-        reso=ltri(ref h);
+        h=httpd.afterStr1(ref lin," ");
+        h=httpd.beforStr9(ref h," ");
+        reso=httpd.ltri(ref h);
       }
       lin=line1(Edos, ref bytes, ref cont1, ref k, ref b);
     }
@@ -337,11 +334,11 @@ class Session{
     string sub,res="",ext=".";
     if(reso.Length>0 && Host.Length>0){
       res=HttpUtility.UrlDecode(reso);
-      QUERY_STRING=afterStr1(ref res,"?");
-      res=beforStr1(ref res,"?");
-      sub=beforStr1(ref Host,":");
+      QUERY_STRING=httpd.afterStr1(ref res,"?");
+      res=httpd.beforStr1(ref res,"?");
+      sub=httpd.beforStr1(ref Host,":");
       // ".." в запроах недопустимы в целях безопасности
-      if(res.IndexOf("..")<0) ext=afterStr9(ref res,ext);
+      if(res.IndexOf("..")<0) ext=httpd.afterStr9(ref res,ext);
       
       if(ext.Length>0){
         R=1;
@@ -484,7 +481,7 @@ class Session{
       wsf.RedirectStandardInput = true;
       // Поставить разумное ограничение на размер потока
       if(Content_Type.LastIndexOf("form-")<0 || Content_Length>httpd.post){
-        filename=valStr(ref Content_Disposition,"filename");
+        filename=httpd.valStr(ref Content_Disposition,"filename");
         if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
         wsf.EnvironmentVariables["POST_FILENAME"] = filename = dirname+"/"+filename;
       }
@@ -588,7 +585,7 @@ value2
   async Task send_prg(System.Net.Sockets.NetworkStream Stream){
     int j=-1, N=0;
     byte[] bytes1;
-    string prg=afterStr9(ref res,"/"), dirprg=System.IO.Path.GetDirectoryName(
+    string prg=httpd.afterStr9(ref res,"/"), dirprg=System.IO.Path.GetDirectoryName(
            System.Reflection.Assembly.GetEntryAssembly().Location),dirname="",
            filename="";
 
@@ -612,13 +609,13 @@ value2
         dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
         // Ограничение на размер потока определяется возможностями VFP на размер строки
         if(Content_Type.LastIndexOf("form-")<0 || Content_Length>67108832){
-          filename=valStr(ref Content_Disposition,"filename");
+          filename=httpd.valStr(ref Content_Disposition,"filename");
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
           filename = dirname+"/"+filename;
         }
       }
       httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
-      httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+beforStr9(ref res,"/")+"\"))");
+      httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
       httpd.vfp[j].SetVar("SCRIPT_FILENAME",res);
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       httpd.vfp[j].SetVar("HTTP_COOKIE",Cookie);
@@ -678,7 +675,7 @@ value2
       httpd.vfp[j].SetVar("STD_INPUT",cont1);
       try{
         bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
-            GetBytes(head+httpd.vfp[j].Eval(beforStr9(ref prg,".prg")+"()"));
+            GetBytes(head+httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()"));
       }catch(Exception e){
         bytes1=Ewin.GetBytes(head+"\r\nError in VFP: "+e.Message);
       }
@@ -824,7 +821,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Многопоточный http.net сервер версия 1.95, (C) kornienko.ru апрель 2024.
+        Console.WriteLine(@"Многопоточный http.net сервер версия 2.0, (C) kornienko.ru май 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
