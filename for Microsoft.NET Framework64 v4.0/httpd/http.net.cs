@@ -258,15 +258,21 @@ class Session{
     return L;
   }
 
+  static string zinc(Encoding Edos, ref string z, ref byte[] bytes, ref int k, int i){
+    return z+Edos.GetString(bytes,k,i);
+  }
+
   static string line1(Encoding Edos, ref byte[] bytes, ref string cont1, ref int k, ref byte b){
-    int i,j;
+    int i;
     string z=cont1;
     cont1="";
     i=httpd.find10(ref bytes,k);
     if(i<bytes.Length){
-      j=i-k;
-      if(i>0 && bytes[i-1]==13) j--;
-      z+=Edos.GetString(bytes,k,j);
+      if(i>0 && bytes[i-1]==13){
+        z=zinc(Edos, ref z, ref bytes, ref k, i-k-1);
+      }else{
+        z=zinc(Edos, ref z, ref bytes, ref k, i-k);
+      }
       k=i+1;
       b=0;
     }else{
