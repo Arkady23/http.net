@@ -73,7 +73,7 @@ D:\work\httpd>http.net /?
 *  Тест. Вывод переменных окружения.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * 
   stdout=""
-  c13=chr(10)+chr(13)
+  c13=chr(13)+chr(10)
   stdout="<h1>Привет мир из MS VFP!</h1>" + ;
          "<h3>Переменные окружения:</h3>" + ;
          "SCRIPT_FILENAME=" + SCRIPT_FILENAME + ";<br>" + c13 + ;
