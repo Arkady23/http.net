@@ -475,7 +475,7 @@ class Session{
   async Task send_wsf(System.Net.Sockets.NetworkStream Stream){
     int N=0;
     byte[] bytes1;
-    string cont, dirname="", filename="";
+    string dirname="", filename="";
     var wsf = new ProcessStartInfo();
 
     wsf.EnvironmentVariables["SCRIPT_FILENAME"] = res;
@@ -483,10 +483,10 @@ class Session{
     wsf.EnvironmentVariables["HTTP_COOKIE"] = Cookie;
     wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
     if(Content_Length>0){
-      dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
       wsf.RedirectStandardInput = true;
       // Поставить разумное ограничение на размер потока
       if(Content_Type.LastIndexOf("form-")<0 || Content_Length>httpd.post){
+        dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
         filename=httpd.valStr(ref Content_Disposition,"filename");
         if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
         wsf.EnvironmentVariables["POST_FILENAME"] = filename = dirname+"/"+filename;
@@ -578,8 +578,7 @@ value2
     }
 
     // Вывод полученных данных wsf-скрипта
-    cont=Proc.StandardOutput.ReadToEnd();
-    bytes1=Edos.GetBytes(head+cont);
+    bytes1=Edos.GetBytes(head+Proc.StandardOutput.ReadToEnd());
 
     await Stream.WriteAsync(bytes1,0,bytes1.Length);
 
@@ -612,9 +611,9 @@ value2
       bytes1=Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry");
     }else if(j<httpd.db){
       if(Content_Length>0){
-        dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
         // Ограничение на размер потока определяется возможностями VFP на размер строки
         if(Content_Type.LastIndexOf("form-")<0 || Content_Length>67108832){
+          dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
           filename=httpd.valStr(ref Content_Disposition,"filename");
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
           filename = dirname+"/"+filename;
@@ -827,7 +826,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Многопоточный http.net сервер версия 2.0, (C) kornienko.ru май 2024.
+        Console.WriteLine(@"Многопоточный http.net сервер версия 2.1, (C) kornienko.ru июнь 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
