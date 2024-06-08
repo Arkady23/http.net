@@ -496,7 +496,7 @@ class Session{
     wsf.UseShellExecute = false;
     wsf.CreateNoWindow = true;
     wsf.FileName = httpd.Proc;
-    wsf.Arguments = httpd.Args+"\""+res+"\"";
+    wsf.Arguments = httpd.Args+" \""+res+"\"";
     Process Proc = Process.Start(wsf);
 
     if(Content_Length>0){
@@ -712,7 +712,7 @@ class main{
     if(getArgs(Args)){
       if(httpd.Args.Length==0){
         if(httpd.Proc.Substring(httpd.Proc.Length-11,11)=="cscript.exe" ||
-           httpd.Proc.Substring(httpd.Proc.Length-7,7)=="cscript") httpd.Args="//Nologo ";
+           httpd.Proc.Substring(httpd.Proc.Length-7,7)=="cscript") httpd.Args="//Nologo";
       }else{
         httpd.Args+=" ";
       }
