@@ -578,7 +578,7 @@ value2
     }
 
     // Вывод полученных данных wsf-скрипта
-    bytes1=Edos.GetBytes(head+Proc.StandardOutput.ReadToEnd());
+    bytes1=Ewin.GetBytes(head+Proc.StandardOutput.ReadToEnd());
 
     await Stream.WriteAsync(bytes1,0,bytes1.Length);
 
