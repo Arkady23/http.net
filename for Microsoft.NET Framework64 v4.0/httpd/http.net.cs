@@ -202,7 +202,13 @@ class Session{
           cont1=Edos.GetString(bytes,k,i-k);
           k=0;
         }
-        i = await Stream.ReadAsync(bytes, 0, bytes.Length);
+
+
+        try{
+          i = await Stream.ReadAsync(bytes, 0, bytes.Length);
+        }catch(IOException){
+          i = -1;
+        }
 
         if(i>0){
           l = getHeaders(Edos, ref bytes, ref cont1, ref k, ref reso, ref Host,
@@ -214,7 +220,8 @@ class Session{
         }
       }
 
-      res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
+      if(i>=0)
+        res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
 
       if(R>0){
         httpd.log2(x1+res);
@@ -565,7 +572,11 @@ value2
         if(N<Content_Length){
           if(R2==0){
             if (ft != null) await ft;
-            i = await Stream.ReadAsync(bytes,0,bytes.Length);
+            try{
+              i = await Stream.ReadAsync(bytes,0,bytes.Length);
+            }catch(IOException){
+              N=Content_Length;
+            }
           }else{
             N=Content_Length;
           }
@@ -580,7 +591,9 @@ value2
     // Вывод полученных данных wsf-скрипта
     bytes1=Ewin.GetBytes(head+Proc.StandardOutput.ReadToEnd());
 
-    await Stream.WriteAsync(bytes1,0,bytes1.Length);
+    try{
+      await Stream.WriteAsync(bytes1,0,bytes1.Length);
+    }catch(IOException){}
 
     Proc.WaitForExit();
     // Освободить ресурсы
@@ -668,7 +681,11 @@ value2
           if(N<Content_Length){
             if(R2==0){
               if (ft != null) await ft;
-              i = await Stream.ReadAsync(bytes,0,bytes.Length);
+              try{
+                i = await Stream.ReadAsync(bytes,0,bytes.Length);
+              }catch(IOException){
+                N=Content_Length;
+              }
             }else{
               N=Content_Length;
             }
@@ -697,7 +714,9 @@ value2
     }else{
       bytes1=Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
     }
-    await Stream.WriteAsync(bytes1,0,bytes1.Length);
+    try{
+      await Stream.WriteAsync(bytes1,0,bytes1.Length);
+    }catch(IOException){}
   }
 
 }
@@ -826,7 +845,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Многопоточный http.net сервер версия 2.1, (C) kornienko.ru июнь 2024.
+        Console.WriteLine(@"Многопоточный http.net сервер версия 2.11, (C) kornienko.ru июнь 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
