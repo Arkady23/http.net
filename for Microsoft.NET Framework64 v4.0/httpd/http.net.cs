@@ -476,7 +476,8 @@ class Session{
         ts.Close();
       }
     }
-    if(tt!=null) await tt;
+
+    if(tt!=null) try{await tt;}catch(IOException){}
   }
 
   async Task send_wsf(System.Net.Sockets.NetworkStream Stream){
