@@ -517,7 +517,11 @@ class Session{
         i = i-k;
       }else{
         k=0;
-        i = await Stream.ReadAsync(bytes,k,bytes.Length);
+        try{
+          i = await Stream.ReadAsync(bytes,k,bytes.Length);
+        }catch(IOException){
+          N=Content_Length;
+        }
       }
       if (filename.Length>0){
         // Открыть файл, если он не открыт
@@ -651,7 +655,11 @@ value2
           i = i-k;
         }else{
           k=0;
-          i = await Stream.ReadAsync(bytes,k,bytes.Length);
+          try{
+            i = await Stream.ReadAsync(bytes,k,bytes.Length);
+          }catch(IOException){
+            N=Content_Length;
+          }
         }
         if (filename.Length>0){
           // Открыть файл, если он не открыт
@@ -846,7 +854,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Многопоточный http.net сервер версия 2.11, (C) kornienko.ru июнь 2024.
+        Console.WriteLine(@"Многопоточный http.net сервер версия 2.12, (C) kornienko.ru июнь 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
