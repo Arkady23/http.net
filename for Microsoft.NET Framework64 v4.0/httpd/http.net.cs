@@ -486,7 +486,7 @@ class Session{
     string dirname="", filename="";
     var wsf = new ProcessStartInfo();
 
-    wsf.EnvironmentVariables["SCRIPT_FILENAME"] = res;
+    wsf.EnvironmentVariables["SCRIPT_FILENAME"] = Path.GetFullPath(res).Replace("\\","/");
     wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
     wsf.EnvironmentVariables["HTTP_COOKIE"] = Cookie;
     wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
@@ -639,7 +639,7 @@ value2
       }
       httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
-      httpd.vfp[j].SetVar("SCRIPT_FILENAME",res);
+      httpd.vfp[j].SetVar("SCRIPT_FILENAME",Path.GetFullPath(res).Replace("\\","/"));
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       httpd.vfp[j].SetVar("HTTP_COOKIE",Cookie);
       httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
@@ -854,7 +854,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Многопоточный http.net сервер версия 2.12, (C) kornienko.ru июнь 2024.
+        Console.WriteLine(@"Многопоточный http.net сервер версия 2.13, (C) kornienko.ru июнь 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
