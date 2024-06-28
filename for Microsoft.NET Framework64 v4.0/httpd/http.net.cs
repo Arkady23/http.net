@@ -107,6 +107,10 @@ public class httpd{
     return x.TrimStart('\t',' ');
   }
 
+  public static string fullres(ref string x){
+    return Path.GetFullPath(x).Replace("\\","/");
+  }
+
   public static string beforStr1(ref string x, string Str){
     int k=0;
     if(Str.Length>0) k=x.IndexOf(Str);
@@ -486,7 +490,7 @@ class Session{
     string dirname="", filename="";
     var wsf = new ProcessStartInfo();
 
-    wsf.EnvironmentVariables["SCRIPT_FILENAME"] = Path.GetFullPath(res).Replace("\\","/");
+    wsf.EnvironmentVariables["SCRIPT_FILENAME"] = httpd.fullres(ref res);
     wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
     wsf.EnvironmentVariables["HTTP_COOKIE"] = Cookie;
     wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
@@ -639,7 +643,7 @@ value2
       }
       httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
-      httpd.vfp[j].SetVar("SCRIPT_FILENAME",Path.GetFullPath(res).Replace("\\","/"));
+      httpd.vfp[j].SetVar("SCRIPT_FILENAME",httpd.fullres(ref res));
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       httpd.vfp[j].SetVar("HTTP_COOKIE",Cookie);
       httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
