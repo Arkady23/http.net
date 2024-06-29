@@ -715,13 +715,17 @@ value2
         bytes1=Ewin.GetBytes(head+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
-      httpd.vfp[j].DoCmd("on erro _box=_box");
-      httpd.vfp[j].DoCmd("clea even");
-      httpd.vfp[j].DoCmd("clea all");
-      httpd.vfp[j].DoCmd("clos data all");
-      httpd.vfp[j].DoCmd("clos all");
-      httpd.vfp[j].DoCmd("on shut");
-      httpd.vfpb[j]=1;
+      try{
+        httpd.vfp[j].DoCmd("on erro _box=_box");
+        httpd.vfp[j].DoCmd("clea even");
+        httpd.vfp[j].DoCmd("clea all");
+        httpd.vfp[j].DoCmd("clos data all");
+        httpd.vfp[j].DoCmd("clos all");
+        httpd.vfp[j].DoCmd("on shut");
+        httpd.vfpb[j]=1;
+      }catch(Exception){
+        httpd.vfpb[j]=0;
+      }
       cont1="";
 
     }else{
@@ -858,7 +862,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Многопоточный http.net сервер версия 2.14, (C) kornienko.ru июнь 2024.
+        Console.WriteLine(@"Многопоточный http.net сервер версия 2.15, (C) kornienko.ru июнь 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
