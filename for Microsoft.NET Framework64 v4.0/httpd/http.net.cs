@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using System.Web;
 using System.Net;
+using System.Text;
+using System.Threading;
 using System.Net.Sockets;
 using System.Diagnostics;
 using System.ComponentModel;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 public class httpd{
   public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000,
@@ -19,8 +19,10 @@ public class httpd{
                        DirectorySessions="Sessions";
   public static Dictionary<string,byte[]> Files = new Dictionary<string,byte[]>();
   public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
+  public static Encoding Edos = Encoding.GetEncoding(28591);
   public static StreamWriter logSW = null;
   public static FileStream logFS = null;
+  public static Encoding Ewin = null;
   public static TextWriter TW = null;
   public static TextWriter TE = null;
   public static dynamic[] vfp = null;
@@ -35,6 +37,7 @@ public class httpd{
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
     Session = new Session[st];
     IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
+    Ewin = Encoding.GetEncoding(cp);
     vfp = new dynamic[db];
     vfpb = new byte[db];
     Server.Bind(ep);
@@ -168,8 +171,6 @@ public class httpd{
 class Session{
   const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                CC="Cache-Control: public, max-age=2300000\r\n";
-  Encoding Edos = Encoding.GetEncoding(28591);
-  Encoding Ewin = Encoding.GetEncoding(httpd.cp);
   private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
                  QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
@@ -203,7 +204,7 @@ class Session{
 
       while (i>0 && l>0){
         if(k>0){
-          cont1=Edos.GetString(bytes,k,i-k);
+          cont1=httpd.Edos.GetString(bytes,k,i-k);
           k=0;
         }
 
@@ -215,7 +216,7 @@ class Session{
         }
 
         if(i>0){
-          l = getHeaders(Edos, ref bytes, ref cont1, ref k, ref reso, ref Host,
+          l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
                          ref User_Agent, ref Referer, ref Accept_Language, ref Origin,
                          ref Cookie, ref Content_Type, ref Content_Disposition,
                          ref Content_Length);
@@ -269,20 +270,20 @@ class Session{
     return L;
   }
 
-  static string zinc(Encoding Edos, ref string z, ref byte[] bytes, ref int k, int i){
-    return z+Edos.GetString(bytes,k,i);
+  static string zinc(ref string z, ref byte[] bytes, ref int k, int i){
+    return z+httpd.Edos.GetString(bytes,k,i);
   }
 
-  static string line1(Encoding Edos, ref byte[] bytes, ref string cont1, ref int k, ref byte b){
+  static string line1(ref byte[] bytes, ref string cont1, ref int k, ref byte b){
     int i;
     string z=cont1;
     cont1="";
     i=httpd.find10(ref bytes,k);
     if(i<bytes.Length){
       if(i>0 && bytes[i-1]==13){
-        z=zinc(Edos, ref z, ref bytes, ref k, i-k-1);
+        z=zinc(ref z, ref bytes, ref k, i-k-1);
       }else{
-        z=zinc(Edos, ref z, ref bytes, ref k, i-k);
+        z=zinc(ref z, ref bytes, ref k, i-k);
       }
       k=i+1;
       b=0;
@@ -292,13 +293,13 @@ class Session{
     return z;
   }
 
-  static byte getHeaders(Encoding Edos, ref byte[] bytes, ref string cont1, ref int k, ref string reso,
+  static byte getHeaders(ref byte[] bytes, ref string cont1, ref int k, ref string reso,
                  ref string Host, ref string User_Agent, ref string Referer,
                  ref string Accept_Language, ref string Origin, ref string Cookie,
                  ref string Content_Type, ref string Content_Disposition,
                  ref int Content_Length){
     byte b=0;
-    string lin=line1(Edos, ref bytes, ref cont1, ref k, ref b),n,h;
+    string lin=line1(ref bytes, ref cont1, ref k, ref b),n,h;
 
     while (lin.Length>0){
 // Console.WriteLine("lin=|"+lin+"|");
@@ -341,7 +342,7 @@ class Session{
         h=httpd.beforStr9(ref h," ");
         reso=httpd.ltri(ref h);
       }
-      lin=line1(Edos, ref bytes, ref cont1, ref k, ref b);
+      lin=line1(ref bytes, ref cont1, ref k, ref b);
     }
     return b;
   }
@@ -353,9 +354,12 @@ class Session{
       res=HttpUtility.UrlDecode(reso);
       QUERY_STRING=httpd.afterStr1(ref res,"?");
       res=httpd.beforStr1(ref res,"?");
-      sub=httpd.beforStr1(ref Host,":");
       // ".." в запроах недопустимы в целях безопасности
-      if(res.IndexOf("..")<0) ext=httpd.afterStr9(ref res,ext);
+      if(res.IndexOf("..")<0){
+        sub=httpd.afterStr9(ref res,"/");
+        ext=httpd.afterStr9(ref sub,ext);
+      }
+      sub=httpd.beforStr1(ref Host,":");
       
       if(ext.Length>0){
         R=1;
@@ -409,9 +413,11 @@ class Session{
         }
       }else{
         R=1;
-        if(!res.EndsWith("/")) res+="/";
         putCT(ref Content_T,"text/html");
-        res=res+httpd.DirectoryIndex;
+        if(!File.Exists(httpd.DocumentRoot+sub+res)){
+          if(!res.EndsWith("/")) res+="/";
+          res+=httpd.DirectoryIndex;
+        }
       }
       reso=sub+res;
       res=httpd.DocumentRoot+reso;
@@ -443,14 +449,14 @@ class Session{
     }
     if(found == 1){
       head+=CL+": "+NN+"\r\n\r\n";
-      i=Edos.GetBytes(head,0,head.Length,bytes,0);
+      i=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
       tt=Stream.WriteAsync(bytes,0,i);
       tt=Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
       tt=Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
         head+=CL+": "+ts.Length+"\r\n\r\n";
-        k=Edos.GetBytes(head,0,head.Length,bytes,0);
+        k=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
@@ -566,7 +572,7 @@ value2
         }else{
           // Всё записывать в поток
           if(i>0){
-            cont1+=Edos.GetString(bytes,k,i);
+            cont1+=httpd.Edos.GetString(bytes,k,i);
           }else{
             R2=1;
           }
@@ -598,7 +604,7 @@ value2
     }
 
     // Вывод полученных данных wsf-скрипта
-    bytes1=Ewin.GetBytes(head+Proc.StandardOutput.ReadToEnd());
+    bytes1=httpd.Ewin.GetBytes(head+Proc.StandardOutput.ReadToEnd());
 
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -630,7 +636,7 @@ value2
     }
 
     if(j<0){
-      bytes1=Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry");
+      bytes1=httpd.Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry");
     }else if(j<httpd.db){
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
@@ -685,7 +691,7 @@ value2
           }else{
             // Всё записывать в поток
             if(i>0){
-              cont1+=Edos.GetString(bytes,k,i);
+              cont1+=httpd.Edos.GetString(bytes,k,i);
             }else{
               R2=1;
             }
@@ -712,7 +718,7 @@ value2
         bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
             GetBytes(head+httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()"));
       }catch(Exception e){
-        bytes1=Ewin.GetBytes(head+"\r\nError in VFP: "+e.Message);
+        bytes1=httpd.Ewin.GetBytes(head+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -729,7 +735,7 @@ value2
       cont1="";
 
     }else{
-      bytes1=Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
+      bytes1=httpd.Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -862,7 +868,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Многопоточный http.net сервер версия 2.15, (C) kornienko.ru июнь 2024.
+        Console.WriteLine(@"Многопоточный http.net сервер версия 2.2, (C) kornienko.ru июнь 2024.
 
 ИСПОЛЬЗОВАНИЕ:
     http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
