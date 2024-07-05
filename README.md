@@ -117,3 +117,4 @@ If there is an error in the prg file:
 2.13-2.14. Июнь 2024. Теперь переменная окружения SCRIPT_FILENAME содержит полный путь к скрипту.  
 2.15. Июнь 2024. Предусмотрен случай закрытия процесса VFP пользовательским prg.  
 2.2. Июль 2024. Оптимизация кода. Добавление разрешения для проверки доменов сервера методом http-1 при получении сертификатов, необходимых для работы через протокол https.   
+2.21. July 2024. The default code page is now taken from the Windows code page data. The help text has been translated into English.  
