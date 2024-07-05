@@ -14,8 +14,8 @@ Multithreaded http.net server version 2.21, (C) kornienko.ru July 2024.
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
 
-    If necessary, Parameter and Value pairs are specified. If the value is text and contains spaces,
-    then it must be enclosed in quotation marks.
+    If necessary, Parameter and Value pairs are specified. If the value is text and contains
+    spaces, then it must be enclosed in quotation marks.
 
 Parameters:                                                                Default values:
      -d      Folder containing the domains.                                   ../www/
