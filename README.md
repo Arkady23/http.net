@@ -8,61 +8,57 @@ The number of threads should not be set immediately to the maximum possible. If 
 
 Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
 ```
-D:\work\httpd>http.net /?
-Многопоточный http.net сервер версия 2.2, (C) kornienko.ru июль 2024.
+PS D:\work\httpd> ./http.net /?
+Multithreaded http.net server version 2.21, (C) kornienko.ru July 2024.
 
-ИСПОЛЬЗОВАНИЕ:
-    http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
+USAGE:
+    http.net [Parameter1 Value1] [Parameter2 Value2] ...
 
-    При необходимости указываются пары Параметр и Значение. Если значение текст и содержит
-    пробелы, то его необходимо заключать в кавычки.
+    If necessary, Parameter and Value pairs are specified. If the value is text and contains spaces,
+    then it must be enclosed in quotation marks.
 
-Параметры:                                                          Значения по умолчанию:
-     -d      Папка, содержащая домены.                                        ../www/
-     -i      Главный документ в папках. Главный документ в папке, заданной    index.html
-             параметром -d используется для отображения страницы с кодом
-             404 - файл не найден. Для сжатия трафика поддерживаются файлы,
-             сжатые методом gzip вида имя.расширение.gz, например -
-             index.html.gz или library.js.gz и т.д.
-     -p      Порт, который прослушивает сервер.                               8080
-     -b      Размер буферов чтения и записи.                                  16384
-     -s      Количество одновременно обрабатываемых запросов. Максимальное    888
-             число ограничивается только производительностью процессора и
-             размером оперативной памяти.
-     -q      Количество дополнительных запросов, хранящихся в очереди,        888
-             если превышено количество поступивших одновременно запросов,
-             заданных параметром -s. Если сумма обрабатываемых и ожидающих
-             в очереди запросов будет превышена, то клиенту посылается
-             отказ в обслуживании.
-     -cp     Номер кодовой страницы, используемый для передачи текста.        1251
-     -db     Максимальное количество динамически запускаемых экземпляров      22
-             СУБД VFP. Расширение скриптов для запуска СУБД - prg. Процессы
-             запускаются по мере одновременного обращения клиентов до
-             заданного значения.
-     -log    Размер журнала регистрации запросов в строках. Журнал состоит    10000
-             из двух чередующихся версий http.net.x.log и http.net.y. Если
-             задан размер менее 80, то журнал не ведётся.
-     -less   Максимальный размер небольших файлов, которые должны             524288
-             кешироваться. Все такие файлы при обращении к ним для повышения
-             производительности будут сохраняться в оперативной памяти.
-     -post   Максимальный размер принимаемого запроса для передачи            33554432
-             файлу-скрипту. Если он будет превышен, то запрос помещается в
-             файл, имя которого передается скрипту в переменной окружения
-             POST_FILENAME. Другие формируемые переменные окружения -
-             SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. Если в
-             данных запроса отсутствует директива form-..., то входящий
-             поток данных целиком будет помещен в файл. Эта особенность
-             может использоваться для передачи серверу файлов. При этом имя
-             файла будет находиться в переменной окружения POST_FILENAME.
-     -proc   Используемый оброботчик скриптов. Если нобходимо, то нужно       cscript.exe
-             также включить полный путь к исполняемому файлу. По умолчанию
-             используется встроенный в ОС Microsoft Windows компонент,
-             очень быстрый обработчик - сервер сценариев (WSH), использующий
-             языки JScript и VBScript.
-     -args   Дополнительные параметры командной строки запуска оброботчика.
-             При использовании cscript.exe в случае, если дополнительные
-             параметры не заданы, используется параметр //Nologo.
-     -ext    Расширение файлов-скриптов.                                      wsf
+Parameters:                                                           Default values:
+     -d      Folder containing the domains.                                   ../www/
+     -i      Main document is in the folders. The main document in the        index.html
+             folder specified by the -d parameter is used to display the page
+             with the 404 code - file was not found. To compress traffic,
+             files compressed using gzip method of the name.expansion.gz type
+             are supported, for example - index.html.gz or library.js.gz etc.
+     -p      Port that the server is listening on.                            8080
+     -b      Size of the read and write buffers.                              16384
+     -s      Number of requests being processed at the same time.             888
+             The maximum number is limited by processor performance, RAM size
+             and Windows settings.
+     -q      Number of additional requests stored in the queue if the number  888
+             of simultaneous requests specified by the -s parameter is
+             exceeded. If the amount of requests processed and pending in the
+             queue is exceeded, a denial of service is sent to the client.
+     -cp     Code page number used for text transfer.                         1251
+     -db     Maximum number of dynamically running MS VFP DBMS instances.     22
+             Extending scripts to run VFP - prg. Pprocesses are started as
+             needed by simultaneous client requests to the set value.
+     -log    Size of the query log in rows. The log consists of two           10000
+             interleaved versions http.net.x.log and http.net.y.log. If the
+             size is set to less than 80, then the log is not kept.
+     -less   Maximum size of small files that should be cached. All such      524288
+             files will be stored in RAM to improve performance.
+     -post   Maximum size of the accepted request to transfer to the script   33554432
+             file. If it is exceeded, the request is placed in a file,
+             the name of which is passed to the script in the environment
+             variable POST_FILENAME. Other generated environment variables -
+             SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. If
+             the form-... directive is missing from the request data, then
+             incoming data stream will be placed entirely in a file. This
+             feature can be used to transfer files to the server. In this case,
+             the file name will be in the environment variable POST_FILENAME.
+     -proc   Script handler used. If necessary, you must also include         cscript.exe
+             the full path to the executable file. By default, the component
+             built into Microsoft Windows OS is used, a very fast script
+             server handler (WSH) using the JScript and VBScript languages.
+     -args   Additional parameters of the handler startup command line.
+             When using cscript.exe if no additional parameters are specified,
+             the //Nologo parameter is used.
+     -ext    Extension of the script files.                                   wsf
 ```
 Корневая папка для доменов (по умолчанию www) должна содержать папки, соответствующие доменному имени и поддомену запрашиваемого ресурса. Например, если запрос выглядит как http://a.kornienko.ru , то в корневой папке для доменов должна быть папка с именем a.kornienko.ru. Если вам нужно предоставить псевдонимам другие имена, вы можете создать папку в корневой папке в качестве символической ссылки на другую папку.  
 
