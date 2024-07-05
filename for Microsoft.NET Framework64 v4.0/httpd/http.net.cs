@@ -11,8 +11,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 public class httpd{
-  public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000,
-                    post=33554432, le=524288, cp=1251, logi=0, i, k;
+  public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
+                    le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k;
   public static string DocumentRoot="../www/", DirectoryIndex="index.html",
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -868,60 +868,56 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Многопоточный http.net сервер версия 2.2, (C) kornienko.ru июнь 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.21, (C) kornienko.ru July 2024.
 
-ИСПОЛЬЗОВАНИЕ:
-    http.net [Параметр1 Значение1] [Параметр2 Значение2] ...
+USAGE:
+    http.net [Parameter1 Value1] [Parameter2 Value2] ...
 
-    При необходимости указываются пары Параметр и Значение. Если значение текст и содержит
-    пробелы, то его необходимо заключать в кавычки.
+    If necessary, Parameter and Value pairs are specified. If the value is text and contains spaces,
+    then it must be enclosed in quotation marks.
 
-Параметры:                                                          Значения по умолчанию:
-     -d      Папка, содержащая домены.                                        "+httpd.DocumentRoot+@"
-     -i      Главный документ в папках. Главный документ в папке, заданной    "+httpd.DirectoryIndex+@"
-             параметром -d используется для отображения страницы с кодом
-             404 - файл не найден. Для сжатия трафика поддерживаются файлы,
-             сжатые методом gzip вида имя.расширение.gz, например -
-             index.html.gz или library.js.gz и т.д.
-     -p      Порт, который прослушивает сервер.                               "+httpd.port.ToString()+@"
-     -b      Размер буферов чтения и записи.                                  "+httpd.bu.ToString()+@"
-     -s      Количество одновременно обрабатываемых запросов. Максимальное    "+httpd.st.ToString()+@"
-             число ограничивается только производительностью процессора и
-             размером оперативной памяти.
-     -q      Количество дополнительных запросов, хранящихся в очереди,        "+httpd.qu.ToString()+@"
-             если превышено количество поступивших одновременно запросов,
-             заданных параметром -s. Если сумма обрабатываемых и ожидающих
-             в очереди запросов будет превышена, то клиенту посылается
-             отказ в обслуживании.
-     -cp     Номер кодовой страницы, используемый для передачи текста.        "+httpd.cp.ToString()+@"
-     -db     Максимальное количество динамически запускаемых экземпляров      "+httpd.db.ToString()+@"
-             СУБД MS VFP. Расширение скриптов для запуска СУБД - prg.
-             Процессы запускаются по мере одновременного обращения клиентов
-             до заданного значения.
-     -log    Размер журнала регистрации запросов в строках. Журнал состоит    "+httpd.log9.ToString()+@"
-             из двух чередующихся версий http.net.x.log и http.net.y. Если
-             задан размер менее "+log1.ToString()+@", то журнал не ведётся.
-     -less   Максимальный размер небольших файлов, которые должны             "+httpd.le.ToString()+@"
-             кешироваться. Все такие файлы при обращении к ним для повышения
-             производительности будут сохраняться в оперативной памяти.
-     -post   Максимальный размер принимаемого запроса для передачи            "+httpd.post.ToString()+@"
-             файлу-скрипту. Если он будет превышен, то запрос помещается в
-             файл, имя которого передается скрипту в переменной окружения
-             POST_FILENAME. Другие формируемые переменные окружения -
-             SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. Если в
-             данных запроса отсутствует директива form-..., то входящий
-             поток данных целиком будет помещен в файл. Эта особенность
-             может использоваться для передачи серверу файлов. При этом имя
-             файла будет находиться в переменной окружения POST_FILENAME.
-     -proc   Используемый оброботчик скриптов. Если нобходимо, то нужно       "+httpd.Proc+@"
-             также включить полный путь к исполняемому файлу. По умолчанию
-             используется встроенный в ОС Microsoft Windows компонент,
-             очень быстрый обработчик - сервер сценариев (WSH), использующий
-             языки JScript и VBScript.
-     -args   Дополнительные параметры командной строки запуска оброботчика.
-             При использовании cscript.exe в случае, если дополнительные
-             параметры не заданы, используется параметр //Nologo.
-     -ext    Расширение файлов-скриптов.                                      "+httpd.Ext);
+Parameters:                                                           Default values:
+     -d      Folder containing the domains.                                   "+httpd.DocumentRoot+@"
+     -i      Main document is in the folders. The main document in the        "+httpd.DirectoryIndex+@"
+             folder specified by the -d parameter is used to display the page
+             with the 404 code - file was not found. To compress traffic,
+             files compressed using gzip method of the name.expansion.gz type
+             are supported, for example - index.html.gz or library.js.gz etc.
+     -p      Port that the server is listening on.                            "+httpd.port.ToString()+@"
+     -b      Size of the read and write buffers.                              "+httpd.bu.ToString()+@"
+     -s      Number of requests being processed at the same time.             "+httpd.st.ToString()+@"
+             The maximum number is limited by processor performance, RAM size
+             and Windows settings.
+     -q      Number of additional requests stored in the queue if the number  "+httpd.qu.ToString()+@"
+             of simultaneous requests specified by the -s parameter is
+             exceeded. If the amount of requests processed and pending in the
+             queue is exceeded, a denial of service is sent to the client.
+     -cp     Code page number used for text transfer.                         "+httpd.cp.ToString()+@"
+     -db     Maximum number of dynamically running MS VFP DBMS instances.     "+httpd.db.ToString()+@"
+             Extending scripts to run VFP - prg. Pprocesses are started as
+             needed by simultaneous client requests to the set value.
+     -log    Size of the query log in rows. The log consists of two           "+httpd.log9.ToString()+@"
+             interleaved versions http.net.x.log and http.net.y.log. If the
+             size is set to less than "+log1.ToString()+@", then the log is not kept.
+     -less   Maximum size of small files that should be cached. All such      "+httpd.le.ToString()+@"
+             files will be stored in RAM to improve performance.
+     -post   Maximum size of the accepted request to transfer to the script   "+httpd.post.ToString()+@"
+             file. If it is exceeded, the request is placed in a file,
+             the name of which is passed to the script in the environment
+             variable POST_FILENAME. Other generated environment variables -
+             SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. If
+             the form-... directive is missing from the request data, then
+             incoming data stream will be placed entirely in a file. This
+             feature can be used to transfer files to the server. In this case,
+             the file name will be in the environment variable POST_FILENAME.
+     -proc   Script handler used. If necessary, you must also include         "+httpd.Proc+@"
+             the full path to the executable file. By default, the component
+             built into Microsoft Windows OS is used, a very fast script
+             server handler (WSH) using the JScript and VBScript languages.
+     -args   Additional parameters of the handler startup command line.
+             When using cscript.exe if no additional parameters are specified,
+             the //Nologo parameter is used.
+     -ext    Extension of the script files.                                   "+httpd.Ext);
         l=false;
         break;
       }
