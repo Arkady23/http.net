@@ -17,7 +17,7 @@ USAGE:
     If necessary, Parameter and Value pairs are specified. If the value is text and contains spaces,
     then it must be enclosed in quotation marks.
 
-Parameters:                                                           Default values:
+Parameters:                                                                Default values:
      -d      Folder containing the domains.                                   ../www/
      -i      Main document is in the folders. The main document in the        index.html
              folder specified by the -d parameter is used to display the page
@@ -49,14 +49,15 @@ Parameters:                                                           Default va
              SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. If
              the form-... directive is missing from the request data, then
              incoming data stream will be placed entirely in a file. This
-             feature can be used to transfer files to the server. In this case,
-             the file name will be in the environment variable POST_FILENAME.
+             feature can be used to transfer files to the server. In this
+             case, the file name will be in the environment variable
+             POST_FILENAME.
      -proc   Script handler used. If necessary, you must also include         cscript.exe
              the full path to the executable file. By default, the component
              built into Microsoft Windows OS is used, a very fast script
              server handler (WSH) using the JScript and VBScript languages.
-     -args   Additional parameters of the handler startup command line.
-             When using cscript.exe if no additional parameters are specified,
+     -args   Additional parameters of the handler startup command line. When
+             using cscript.exe if no additional parameters are specified,
              the //Nologo parameter is used.
      -ext    Extension of the script files.                                   wsf
 ```
