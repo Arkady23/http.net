@@ -17,7 +17,7 @@ USAGE:
     If necessary, Parameter and Value pairs are specified. If the value is text and contains
     spaces, then it must be enclosed in quotation marks.
 
-Parameters:                                                                Default values:
+Parameters:                                                               Default values:
      -d      Folder containing the domains.                                   ../www/
      -i      Main document is in the folders. The main document in the        index.html
              folder specified by the -d parameter is used to display the page
