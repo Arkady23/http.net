@@ -873,51 +873,52 @@ class main{
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
 
-    If necessary, Parameter and Value pairs are specified. If the value is text and contains spaces,
-    then it must be enclosed in quotation marks.
+    If necessary, Parameter and Value pairs are specified. If the value is text and contains
+    spaces, then it must be enclosed in quotation marks.
 
-Parameters:                                                           Default values:
-     -d      Folder containing the domains.                                   "+httpd.DocumentRoot+@"
-     -i      Main document is in the folders. The main document in the        "+httpd.DirectoryIndex+@"
+Parameters:                                                                  Default values:
+     -d      Folder containing the domains.                                      "+httpd.DocumentRoot+@"
+     -i      Main document is in the folders. The main document in the           "+httpd.DirectoryIndex+@"
              folder specified by the -d parameter is used to display the page
              with the 404 code - file was not found. To compress traffic,
              files compressed using gzip method of the name.expansion.gz type
              are supported, for example - index.html.gz or library.js.gz etc.
-     -p      Port that the server is listening on.                            "+httpd.port.ToString()+@"
-     -b      Size of the read and write buffers.                              "+httpd.bu.ToString()+@"
-     -s      Number of requests being processed at the same time.             "+httpd.st.ToString()+@"
+     -p      Port that the server is listening on.                               "+httpd.port.ToString()+@"
+     -b      Size of the read and write buffers.                                 "+httpd.bu.ToString()+@"
+     -s      Number of requests being processed at the same time.                "+httpd.st.ToString()+@"
              The maximum number is limited by processor performance, RAM size
              and Windows settings.
-     -q      Number of additional requests stored in the queue if the number  "+httpd.qu.ToString()+@"
+     -q      Number of additional requests stored in the queue if the number     "+httpd.qu.ToString()+@"
              of simultaneous requests specified by the -s parameter is
              exceeded. If the amount of requests processed and pending in the
              queue is exceeded, a denial of service is sent to the client.
-     -cp     Code page number used for text transfer.                         "+httpd.cp.ToString()+@"
-     -db     Maximum number of dynamically running MS VFP DBMS instances.     "+httpd.db.ToString()+@"
+     -cp     Code page number used for text transfer.                            "+httpd.cp.ToString()+@"
+     -db     Maximum number of dynamically running MS VFP DBMS instances.        "+httpd.db.ToString()+@"
              Extending scripts to run VFP - prg. Pprocesses are started as
              needed by simultaneous client requests to the set value.
-     -log    Size of the query log in rows. The log consists of two           "+httpd.log9.ToString()+@"
+     -log    Size of the query log in rows. The log consists of two              "+httpd.log9.ToString()+@"
              interleaved versions http.net.x.log and http.net.y.log. If the
              size is set to less than "+log1.ToString()+@", then the log is not kept.
-     -less   Maximum size of small files that should be cached. All such      "+httpd.le.ToString()+@"
+     -less   Maximum size of small files that should be cached. All such         "+httpd.le.ToString()+@"
              files will be stored in RAM to improve performance.
-     -post   Maximum size of the accepted request to transfer to the script   "+httpd.post.ToString()+@"
+     -post   Maximum size of the accepted request to transfer to the script      "+httpd.post.ToString()+@"
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
              variable POST_FILENAME. Other generated environment variables -
              SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. If
              the form-... directive is missing from the request data, then
              incoming data stream will be placed entirely in a file. This
-             feature can be used to transfer files to the server. In this case,
-             the file name will be in the environment variable POST_FILENAME.
-     -proc   Script handler used. If necessary, you must also include         "+httpd.Proc+@"
+             feature can be used to transfer files to the server. In this
+             case, the file name will be in the environment variable
+             POST_FILENAME.
+     -proc   Script handler used. If necessary, you must also include            "+httpd.Proc+@"
              the full path to the executable file. By default, the component
              built into Microsoft Windows OS is used, a very fast script
              server handler (WSH) using the JScript and VBScript languages.
-     -args   Additional parameters of the handler startup command line.
-             When using cscript.exe if no additional parameters are specified,
+     -args   Additional parameters of the handler startup command line. When
+             using cscript.exe if no additional parameters are specified,
              the //Nologo parameter is used.
-     -ext    Extension of the script files.                                   "+httpd.Ext);
+     -ext    Extension of the script files.                                      "+httpd.Ext);
         l=false;
         break;
       }
