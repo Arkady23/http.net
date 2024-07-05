@@ -1,6 +1,6 @@
 # http.net and https.net (soon)
-Multithreaded http.net and https.net C# servers using the dotNet v4 framework included in Windows by default.  
-Многопоточный http.net и https.net серверы на C# с использованием фреймворка dotNet v4, входящего в Windows по умолчанию.  
+Multithreaded http.net and https.net C# servers using the dotNet v4 framework included 10/11 in Windows by default.  
+Многопоточный http.net и https.net серверы на C# с использованием фреймворка dotNet v4, входящего в Windows 10/11 по умолчанию.  
 
 The root folder for domains (by default www) must contain folders that match the domain name and subdomain of the requested resource. For example, if the request looks like http://a.kornienko.ru , then there should be a folder named in the root folder for domains a.kornienko.ru. If you need to provide aliases with other names, then you can create a folder in the root folder as a symbolic link to another folder.  
 
