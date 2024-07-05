@@ -17,32 +17,32 @@ USAGE:
     If necessary, Parameter and Value pairs are specified. If the value is text and contains
     spaces, then it must be enclosed in quotation marks.
 
-Parameters:                                                               Default values:
-     -d      Folder containing the domains.                                   ../www/
-     -i      Main document is in the folders. The main document in the        index.html
+Parameters:                                                                  Default values:
+     -d      Folder containing the domains.                                      ../www/
+     -i      Main document is in the folders. The main document in the           index.html
              folder specified by the -d parameter is used to display the page
              with the 404 code - file was not found. To compress traffic,
              files compressed using gzip method of the name.expansion.gz type
              are supported, for example - index.html.gz or library.js.gz etc.
-     -p      Port that the server is listening on.                            8080
-     -b      Size of the read and write buffers.                              16384
-     -s      Number of requests being processed at the same time.             888
+     -p      Port that the server is listening on.                               8080
+     -b      Size of the read and write buffers.                                 16384
+     -s      Number of requests being processed at the same time.                888
              The maximum number is limited by processor performance, RAM size
              and Windows settings.
-     -q      Number of additional requests stored in the queue if the number  888
+     -q      Number of additional requests stored in the queue if the number     888
              of simultaneous requests specified by the -s parameter is
              exceeded. If the amount of requests processed and pending in the
              queue is exceeded, a denial of service is sent to the client.
-     -cp     Code page number used for text transfer.                         1251
-     -db     Maximum number of dynamically running MS VFP DBMS instances.     22
+     -cp     Code page number used for text transfer.                            1251
+     -db     Maximum number of dynamically running MS VFP DBMS instances.        22
              Extending scripts to run VFP - prg. Pprocesses are started as
              needed by simultaneous client requests to the set value.
-     -log    Size of the query log in rows. The log consists of two           10000
+     -log    Size of the query log in rows. The log consists of two              10000
              interleaved versions http.net.x.log and http.net.y.log. If the
              size is set to less than 80, then the log is not kept.
-     -less   Maximum size of small files that should be cached. All such      524288
+     -less   Maximum size of small files that should be cached. All such         524288
              files will be stored in RAM to improve performance.
-     -post   Maximum size of the accepted request to transfer to the script   33554432
+     -post   Maximum size of the accepted request to transfer to the script      33554432
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
              variable POST_FILENAME. Other generated environment variables -
@@ -52,14 +52,14 @@ Parameters:                                                               Defaul
              feature can be used to transfer files to the server. In this
              case, the file name will be in the environment variable
              POST_FILENAME.
-     -proc   Script handler used. If necessary, you must also include         cscript.exe
+     -proc   Script handler used. If necessary, you must also include            cscript.exe
              the full path to the executable file. By default, the component
              built into Microsoft Windows OS is used, a very fast script
              server handler (WSH) using the JScript and VBScript languages.
      -args   Additional parameters of the handler startup command line. When
              using cscript.exe if no additional parameters are specified,
              the //Nologo parameter is used.
-     -ext    Extension of the script files.                                   wsf
+     -ext    Extension of the script files.                                      wsf
 ```
 Корневая папка для доменов (по умолчанию www) должна содержать папки, соответствующие доменному имени и поддомену запрашиваемого ресурса. Например, если запрос выглядит как http://a.kornienko.ru , то в корневой папке для доменов должна быть папка с именем a.kornienko.ru. Если вам нужно предоставить псевдонимам другие имена, вы можете создать папку в корневой папке в качестве символической ссылки на другую папку.  
 
