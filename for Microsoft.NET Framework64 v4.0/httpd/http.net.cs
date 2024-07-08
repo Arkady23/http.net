@@ -93,6 +93,8 @@ public class httpd{
         logSW.Flush();
         logFS.Flush();
       }
+    }catch(ObjectDisposedException){
+      log9=0;
     }catch(IOException){
       Thread.Sleep(23); log2(x+"");
     }
