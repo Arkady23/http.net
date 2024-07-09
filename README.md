@@ -1,8 +1,8 @@
-# http.net and https.net (soon)
+# http.net and https.net
 Multithreaded http.net and https.net C# servers using the dotNet v4 framework included in Windows 10/11 by default.  
 Многопоточный http.net и https.net серверы на C# с использованием фреймворка dotNet v4, входящего в Windows 10/11 по умолчанию.  
 
-The root folder for domains (by default www) must contain folders that match the domain name and subdomain of the requested resource. For example, if the request looks like http://a.kornienko.ru , then there should be a folder named in the root folder for domains a.kornienko.ru. If you need to provide aliases with other names, then you can create a folder in the root folder as a symbolic link to another folder.  
+The root folder for domains (by default www) must contain folders that match the domain name and subdomain of the requested resource. For example, if the request looks like http://a.kornienko.ru or https://a.kornienko.ru, then there should be a folder named in the root folder for domains a.kornienko.ru. If you need to provide aliases with other names, then you can create a folder in the root folder as a symbolic link to another folder.  
 
 The number of threads should not be set immediately to the maximum possible. If the values are very high, the operating system may block the server operation. In my case, the maximum value at which the server is running steadily turned out to be exactly 1000. The default is 888. You can check how quickly threads are initialized by using the log, which indicates the timestamps of the server startup and the readiness of tasks to receive requests.  
 
@@ -61,7 +61,7 @@ Parameters:                                                                  Def
              the //Nologo parameter is used.
      -ext    Extension of the script files.                                      wsf
 ```
-Корневая папка для доменов (по умолчанию www) должна содержать папки, соответствующие доменному имени и поддомену запрашиваемого ресурса. Например, если запрос выглядит как http://a.kornienko.ru , то в корневой папке для доменов должна быть папка с именем a.kornienko.ru. Если вам нужно предоставить псевдонимам другие имена, вы можете создать папку в корневой папке в качестве символической ссылки на другую папку.  
+Корневая папка для доменов (по умолчанию www) должна содержать папки, соответствующие доменному имени и поддомену запрашиваемого ресурса. Например, если запрос выглядит как http://a.kornienko.ru или https://a.kornienko.ru, то в корневой папке для доменов должна быть папка с именем a.kornienko.ru. Если вам нужно предоставить псевдонимам другие имена, вы можете создать папку в корневой папке в качестве символической ссылки на другую папку.  
 
 Число потоков не следут задавать сразу максимально возможным. При очень больших значениях операционная система может заблокировать работу сервера. В моем случае максимальное значение при котором сервер работает устойчиво оказалось ровно 1000. По умолчанию — 888. Проверить, как быстро иницилизируются потоки можно по журналу, в котором указываются метки времени запуска сервера и готовности задач к приему запросов.  
 
