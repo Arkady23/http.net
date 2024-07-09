@@ -2,7 +2,7 @@
 Multithreaded http.net and https.net C# servers using the dotNet v4 framework included in Windows 10/11 by default.  
 Многопоточный http.net и https.net серверы на C# с использованием фреймворка dotNet v4, входящего в Windows 10/11 по умолчанию.  
 
-The root folder for domains (by default www) must contain folders that match the domain name and subdomain of the requested resource. For example, if the request looks like http://a.kornienko.ru or https://a.kornienko.ru, then there should be a folder named in the root folder for domains a.kornienko.ru. If you need to provide aliases with other names, then you can create a folder in the root folder as a symbolic link to another folder.  
+The root folder for domains (by default www) must contain folders that match the domain name and subdomain of the requested resource. For example, if the request looks like [http://a.kornienko.ru](http://a.kornienko.ru) or https://a.kornienko.ru, then there should be a folder named in the root folder for domains a.kornienko.ru. If you need to provide aliases with other names, then you can create a folder in the root folder as a symbolic link to another folder.  
 
 The number of threads should not be set immediately to the maximum possible. If the values are very high, the operating system may block the server operation. In my case, the maximum value at which the server is running steadily turned out to be exactly 1000. The default is 888. You can check how quickly threads are initialized by using the log, which indicates the timestamps of the server startup and the readiness of tasks to receive requests.  
 
