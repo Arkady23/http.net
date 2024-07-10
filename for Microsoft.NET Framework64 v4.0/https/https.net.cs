@@ -212,39 +212,33 @@ class Session{
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       string dt1=DateTime.UtcNow.ToString("R"),
              Content_T=CT+": text/plain\r\n";
-      byte err=0;
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
       x1=IP+" "+Port+"\t";
+      R=R1=R2=0;
       try{
         Stream.AuthenticateAsServer(https.Cert,false,System.Security.Authentication.SslProtocols.Tls12,false);
       }catch(Exception e){
-        err=1;
+        R=6;
         https.log2(x1+e.Message);
       }
-      if(err==0){
+      if(R==0){
         l=1;
-        R=R1=R2=0;
         i=https.bu;
         k=Content_Length=0;
         bytes = new Byte[i];
         cont1=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING=Cookie=
                Referer=Origin=User_Agent=Accept_Language="";
-
-
         while (i>0 && l>0){
           if(k>0){
             cont1=https.Edos.GetString(bytes,k,i-k);
             k=0;
           }
-
-
           try{
             i = await Stream.ReadAsync(bytes, 0, bytes.Length);
           }catch(IOException){
             i = -1;
           }
-
           if(i>0){
             l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
                            ref User_Agent, ref Referer, ref Accept_Language, ref Origin,
@@ -254,10 +248,8 @@ class Session{
             R2=1;
           }
         }
-
         if(i>=0)
           res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
-
         if(R>0){
           https.log2(x1+res);
           head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
@@ -902,7 +894,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.0, (C) kornienko.ru July 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.01, (C) kornienko.ru July 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
