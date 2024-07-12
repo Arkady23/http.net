@@ -452,8 +452,8 @@ class Session{
     if(found == 1){
       head+=CL+": "+NN+"\r\n\r\n";
       i=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
-      tt=Stream.WriteAsync(bytes,0,i);
-      tt=Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
+      await Stream.WriteAsync(bytes,0,i);
+      await Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
       tt=Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
@@ -483,6 +483,7 @@ class Session{
             bytes[i]=13;
             i++;
           }
+          if(tt!=null) await tt;
           tt=Stream.WriteAsync(bytes,0,i);
         }
         ts.Close();
@@ -870,7 +871,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.22, (C) kornienko.ru July 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.23, (C) kornienko.ru July 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
