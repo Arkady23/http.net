@@ -336,7 +336,7 @@ class Session{
           Content_Disposition=h;
           break;
         case CL:
-          Content_Length=int.Parse(h);
+          try{ Content_Length=int.Parse(h); }catch(Exception){ Content_Length=0; }
           break;
         }
       }else{
@@ -871,7 +871,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.23, (C) kornienko.ru July 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.24, (C) kornienko.ru July 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
