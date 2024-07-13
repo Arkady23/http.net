@@ -357,7 +357,7 @@ class Session{
           Content_Disposition=h;
           break;
         case CL:
-          Content_Length=int.Parse(h);
+          try{ Content_Length=int.Parse(h); }catch(Exception){ Content_Length=0; }
           break;
         }
       }else{
@@ -894,7 +894,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.01, (C) kornienko.ru July 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.02, (C) kornienko.ru July 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
