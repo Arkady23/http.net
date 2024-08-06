@@ -117,3 +117,4 @@ If there is an error in the prg file:
 2.21-2.22. July 2024. The default code page is now taken from the Windows code page data. The help text has been translated into English.  
 2.23. July 2024. Synchronization bug.  
 2.24. July 2024. Put request bug.  
+2.3. Aaugust 2024. When sending the script result, the "Content-Type: text/html" header is no longer added in order to maintain the continuity of well-known http servers, such as Apache. Just like when using Apache and others, user now has to generate this header himself.  
