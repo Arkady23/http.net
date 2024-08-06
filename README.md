@@ -9,7 +9,7 @@ The number of threads should not be set immediately to the maximum possible. If 
 Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
 ```
 PS D:\work\httpd> ./http.net /?
-Multithreaded http.net server version 2.24, (C) kornienko.ru July 2024.
+Multithreaded http.net server version 2.3, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -81,7 +81,7 @@ Parameters:                                                                  Def
          "STD_INPUT=" + STD_INPUT + ";<br>" + c13 + ;
          "POST_FILENAME=" + POST_FILENAME + ";<br>" + c13
   stdout= stdout + "ERROR_MESS=" + ERROR_MESS
-return c13+stdout
+return "Content-Type: text/html"+c13+c13+stdout
 ```
 The visual result of the prg script:
 ![The visual result of the prg script](screenShots/2024-03-21.png)
@@ -117,4 +117,4 @@ If there is an error in the prg file:
 2.21-2.22. July 2024. The default code page is now taken from the Windows code page data. The help text has been translated into English.  
 2.23. July 2024. Synchronization bug.  
 2.24. July 2024. Put request bug.  
-2.3. Aaugust 2024. When sending the script result, the "Content-Type: text/html" header is no longer added in order to maintain the continuity of well-known http servers, such as Apache. Just like when using Apache and others, user now has to generate this header himself.  
+2.3. August 2024. When sending the script result, the "Content-Type: text/html" header is no longer added in order to maintain the continuity of well-known http servers, such as Apache. Just like when using Apache and others, user now has to generate this header himself.  
