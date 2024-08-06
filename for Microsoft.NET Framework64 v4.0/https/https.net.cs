@@ -427,7 +427,7 @@ class Session{
         default:
           if(ext==https.Ext || ext=="prg"){
             if(ext==https.Ext){R=2;}else{R=3;}
-            putCT(ref Content_T,"text/html");
+            Content_T="";
           }else{
             // Все другие расширения недопустимы в целях безопасности
             R=0;
