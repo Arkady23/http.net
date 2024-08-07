@@ -192,8 +192,7 @@ class Session{
   public async Task AcceptProc(Socket Client, Socket Server){
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      string dt1=DateTime.UtcNow.ToString("R"),
-             Content_T=CT_T;
+      string dt1=DateTime.UtcNow.ToString("R"), Content_T=CT_T;
       l=1;
       R=R1=R2=0;
       i=httpd.bu;
@@ -872,7 +871,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.24, (C) kornienko.ru July 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.3, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
