@@ -173,6 +173,7 @@ public class httpd{
 class Session{
   const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                CC="Cache-Control: public, max-age=2300000\r\n";
+  const string CT_T=CT+": text/plain\r\n";
   private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
                  QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
@@ -192,7 +193,7 @@ class Session{
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       string dt1=DateTime.UtcNow.ToString("R"),
-             Content_T=CT+": text/plain\r\n";
+             Content_T=CT_T;
       l=1;
       R=R1=R2=0;
       i=httpd.bu;
@@ -639,7 +640,7 @@ value2
     }
 
     if(j<0){
-      bytes1=httpd.Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry");
+      bytes1=httpd.Ewin.GetBytes(head+CT_T+"\r\nMS VFP is missing in the Windows registry");
     }else if(j<httpd.db){
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
@@ -721,7 +722,7 @@ value2
         bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
             GetBytes(head+httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()"));
       }catch(Exception e){
-        bytes1=httpd.Ewin.GetBytes(head+"\r\nError in VFP: "+e.Message);
+        bytes1=httpd.Ewin.GetBytes(head+CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -738,7 +739,7 @@ value2
       cont1="";
 
     }else{
-      bytes1=httpd.Ewin.GetBytes(head+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
+      bytes1=httpd.Ewin.GetBytes(head+CT_T+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
