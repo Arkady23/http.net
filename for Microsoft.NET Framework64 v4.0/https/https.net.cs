@@ -192,6 +192,7 @@ public class https{
 class Session{
   const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                CC="Cache-Control: public, max-age=2300000\r\n";
+  const string CT_T=CT+": text/plain\r\n";
   private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
                  QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
@@ -210,8 +211,7 @@ class Session{
   public async Task AcceptProc(Socket Client, Socket Server){
     using(var Stream = new SslStream(new NetworkStream(Client,true),false)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      string dt1=DateTime.UtcNow.ToString("R"),
-             Content_T=CT+": text/plain\r\n";
+      string dt1=DateTime.UtcNow.ToString("R"), Content_T=CT_T;
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
       x1=IP+" "+Port+"\t";
@@ -660,7 +660,7 @@ value2
     }
 
     if(j<0){
-      bytes1=https.Ewin.GetBytes(head+"\r\nMS VFP is missing in the Windows registry");
+      bytes1=https.Ewin.GetBytes(head+CT_T+"\r\nMS VFP is missing in the Windows registry");
     }else if(j<https.db){
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
@@ -742,7 +742,7 @@ value2
         bytes1=Encoding.GetEncoding(https.vfp[j].Eval("CPCURRENT()")).
             GetBytes(head+https.vfp[j].Eval(https.beforStr9(ref prg,".prg")+"()"));
       }catch(Exception e){
-        bytes1=https.Ewin.GetBytes(head+"\r\nError in VFP: "+e.Message);
+        bytes1=https.Ewin.GetBytes(head+CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -759,7 +759,7 @@ value2
       cont1="";
 
     }else{
-      bytes1=https.Ewin.GetBytes(head+"\r\nAll "+https.db.ToString()+" VFP processes are busy");
+      bytes1=https.Ewin.GetBytes(head+CT_T+"\r\nAll "+https.db.ToString()+" VFP processes are busy");
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -894,7 +894,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.02, (C) kornienko.ru July 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.1, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
