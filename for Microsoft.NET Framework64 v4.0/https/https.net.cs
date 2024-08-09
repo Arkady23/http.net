@@ -13,9 +13,12 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 
 public class https{
+  public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
+                      CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html";
+  public const string CT_T=CT+": text/plain\r\n";
   public static int port=8443, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
                     le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k;
-  public static string DocumentRoot="../www/", DirectoryIndex="index.html",
+  public static string DocumentRoot="../www/", DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="https.net.x.log", logY="https.net.y.log", logZ="",
                        DirectorySessions="Sessions", CerFile="a.kornienko.ru.pfx";
@@ -190,9 +193,6 @@ public class https{
 }
 
 class Session{
-  const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
-               CC="Cache-Control: public, max-age=2300000\r\n";
-  const string CT_T=CT+": text/plain\r\n";
   private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
                  QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
@@ -211,7 +211,7 @@ class Session{
   public async Task AcceptProc(Socket Client, Socket Server){
     using(var Stream = new SslStream(new NetworkStream(Client,true),false)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      string dt1=DateTime.UtcNow.ToString("R"), Content_T=CT_T;
+      string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
       x1=IP+" "+Port+"\t";
@@ -248,8 +248,10 @@ class Session{
             R2=1;
           }
         }
+
         if(i>=0)
           res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
+
         if(R>0){
           https.log2(x1+res);
           head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
@@ -267,11 +269,11 @@ class Session{
           if(R==1){
             if(!gzExists(ref res, ref head)){
               if(!File.Exists(res)){
-                res=https.DocumentRoot+https.DirectoryIndex;
-                gzExists(ref res, ref head);
+                res=https.DocumentRoot+https.DI;
+                if(!gzExists(ref res, ref head)) R=0;
               }
             }
-            await type(Stream);
+            if(R==1) await type(Stream);
           }
         }
       }
@@ -280,7 +282,7 @@ class Session{
   }
 
   static void putCT(ref string c, string x){
-    c=CT+": "+x+"\r\n";
+    c=https.CT+": "+x+"\r\n";
   }
 
   static bool gzExists(ref string res, ref string head){
@@ -350,13 +352,13 @@ class Session{
         case "Cookie":
           Cookie=h;
           break;
-        case CT:
+        case https.CT:
           Content_Type=h;
           break;
-        case CD:
+        case https.CD:
           Content_Disposition=h;
           break;
-        case CL:
+        case https.CL:
           try{ Content_Length=int.Parse(h); }catch(Exception){ Content_Length=0; }
           break;
         }
@@ -377,70 +379,80 @@ class Session{
       res=HttpUtility.UrlDecode(reso);
       QUERY_STRING=https.afterStr1(ref res,"?");
       res=https.beforStr1(ref res,"?");
+      sub=https.beforStr1(ref Host,":");
       // ".." в запроах недопустимы в целях безопасности
       if(res.IndexOf("..")<0){
-        sub=https.afterStr9(ref res,"/");
-        ext=https.afterStr9(ref sub,ext);
-      }
-      sub=https.beforStr1(ref Host,":");
-      
-      if(ext.Length>0){
-        R=1;
-        switch(ext){
-        case "html":
-          putCT(ref Content_T,"text/html");
-          h1=CC;
-          break;
-        case "svg":
-          putCT(ref Content_T,"image/svg+xml");
-          h1=CC;
-          break;
-        case "gif":
-          putCT(ref Content_T,"image/gif");
-          h1=CC;
-          break;
-        case "png":
-          putCT(ref Content_T,"image/png");
-          h1=CC;
-          break;
-        case "jpeg":
-        case "jpg":
-          putCT(ref Content_T,"image/jpeg");
-          h1=CC;
-          break;
-        case "js":
-          putCT(ref Content_T,"text/javascript");
-          h1=CC;
-          break;
-        case "css":
-          putCT(ref Content_T,"text/css");
-          h1=CC;
-          break;
-        case "ico":
-          putCT(ref Content_T,"image/x-icon");
-          h1=CC;
-          break;
-        case "mp4":
-          putCT(ref Content_T,"video/mp4");
-          h1=CC;
-          break;
-        default:
-          if(ext==https.Ext || ext=="prg"){
-            if(ext==https.Ext){R=2;}else{R=3;}
-            Content_T="";
+        if(res.EndsWith("/")) res+=https.DirectoryIndex;
+        reso=https.afterStr9(ref res,"/");
+        ext=https.afterStr9(ref reso,ext);
+        if(ext.Length==0){
+          reso=https.DocumentRoot+sub+res;
+          if(Directory.Exists(reso)){
+            res+="/"+https.DirectoryIndex;
+            ext=https.afterStr9(ref https.DirectoryIndex,".");
           }else{
-            // Все другие расширения недопустимы в целях безопасности
-            R=0;
+            reso+=".";
+            if(File.Exists(reso+https.Ext)){
+              ext=https.Ext;
+            }else if(File.Exists(reso+"prg")){
+              ext="prg";
+            }else{
+              ext="html";
+            }
+            res+="."+ext;
           }
-          break;
         }
-      }else{
-        R=1;
+      }
+      R=1;
+      switch(ext){
+      case "html":
         putCT(ref Content_T,"text/html");
-        if(!File.Exists(https.DocumentRoot+sub+res)){
-          if(!res.EndsWith("/")) res+="/";
-          res+=https.DirectoryIndex;
+        h1=https.CC;
+        break;
+      case "svg":
+        putCT(ref Content_T,"image/svg+xml");
+        h1=https.CC;
+        break;
+      case "gif":
+        putCT(ref Content_T,"image/gif");
+        h1=https.CC;
+        break;
+      case "png":
+        putCT(ref Content_T,"image/png");
+        h1=https.CC;
+        break;
+      case "jpeg":
+      case "jpg":
+        putCT(ref Content_T,"image/jpeg");
+        h1=https.CC;
+        break;
+      case "js":
+        putCT(ref Content_T,"text/javascript");
+        h1=https.CC;
+        break;
+      case "css":
+        putCT(ref Content_T,"text/css");
+        h1=https.CC;
+        break;
+      case "ico":
+        putCT(ref Content_T,"image/x-icon");
+        h1=https.CC;
+        break;
+      case "mp4":
+        putCT(ref Content_T,"video/mp4");
+        h1=https.CC;
+        break;
+      default:
+        Content_T="";
+        if(ext==https.Ext){
+          R=2;
+        }else if(ext=="prg"){
+          R=3;
+        }else{
+          // Все другие расширения недопустимы в целях безопасности
+          R=0;
         }
+        break;
       }
       reso=sub+res;
       res=https.DocumentRoot+reso;
@@ -471,14 +483,14 @@ class Session{
       }
     }
     if(found == 1){
-      head+=CL+": "+NN+"\r\n\r\n";
+      head+=https.CL+": "+NN+"\r\n\r\n";
       i=https.Edos.GetBytes(head,0,head.Length,bytes,0);
       await Stream.WriteAsync(bytes,0,i);
       await Stream.WriteAsync(https.Files[key],0,https.Files[key].Length);
       tt=Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
-        head+=CL+": "+ts.Length+"\r\n\r\n";
+        head+=https.CL+": "+ts.Length+"\r\n\r\n";
         k=https.Edos.GetBytes(head,0,head.Length,bytes,0);
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
@@ -660,7 +672,7 @@ value2
     }
 
     if(j<0){
-      bytes1=https.Ewin.GetBytes(head+CT_T+"\r\nMS VFP is missing in the Windows registry");
+      bytes1=https.Ewin.GetBytes(head+https.CT_T+"\r\nMS VFP is missing in the Windows registry");
     }else if(j<https.db){
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
@@ -742,7 +754,7 @@ value2
         bytes1=Encoding.GetEncoding(https.vfp[j].Eval("CPCURRENT()")).
             GetBytes(head+https.vfp[j].Eval(https.beforStr9(ref prg,".prg")+"()"));
       }catch(Exception e){
-        bytes1=https.Ewin.GetBytes(head+CT_T+"\r\nError in VFP: "+e.Message);
+        bytes1=https.Ewin.GetBytes(head+https.CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -759,7 +771,7 @@ value2
       cont1="";
 
     }else{
-      bytes1=https.Ewin.GetBytes(head+CT_T+"\r\nAll "+https.db.ToString()+" VFP processes are busy");
+      bytes1=https.Ewin.GetBytes(head+https.CT_T+"\r\nAll "+https.db.ToString()+" VFP processes are busy");
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -894,7 +906,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.1, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.11, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
