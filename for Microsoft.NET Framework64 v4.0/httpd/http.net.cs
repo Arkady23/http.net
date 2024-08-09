@@ -11,9 +11,12 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 public class httpd{
+  public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
+                      CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html";
+  public const string CT_T=CT+": text/plain\r\n";
   public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
                     le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k;
-  public static string DocumentRoot="../www/", DirectoryIndex="index.html",
+  public static string DocumentRoot="../www/", DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
@@ -171,9 +174,6 @@ public class httpd{
 }
 
 class Session{
-  const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
-               CC="Cache-Control: public, max-age=2300000\r\n";
-  const string CT_T=CT+": text/plain\r\n";
   private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
                  QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
@@ -192,7 +192,7 @@ class Session{
   public async Task AcceptProc(Socket Client, Socket Server){
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      string dt1=DateTime.UtcNow.ToString("R"), Content_T=CT_T;
+      string dt1=DateTime.UtcNow.ToString("R"), Content_T=httpd.CT_T;
       l=1;
       R=R1=R2=0;
       i=httpd.bu;
@@ -209,14 +209,11 @@ class Session{
           cont1=httpd.Edos.GetString(bytes,k,i-k);
           k=0;
         }
-
-
         try{
           i = await Stream.ReadAsync(bytes, 0, bytes.Length);
         }catch(IOException){
           i = -1;
         }
-
         if(i>0){
           l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
                          ref User_Agent, ref Referer, ref Accept_Language, ref Origin,
@@ -247,11 +244,11 @@ class Session{
         if(R==1){
           if(!gzExists(ref res, ref head)){
             if(!File.Exists(res)){
-              res=httpd.DocumentRoot+httpd.DirectoryIndex;
-              gzExists(ref res, ref head);
+              res=httpd.DocumentRoot+httpd.DI;
+              if(!gzExists(ref res, ref head)) R=0;
             }
           }
-          await type(Stream);
+          if(R==1) await type(Stream);
         }
       }
       Stream.Close();
@@ -259,7 +256,7 @@ class Session{
   }
 
   static void putCT(ref string c, string x){
-    c=CT+": "+x+"\r\n";
+    c=httpd.CT+": "+x+"\r\n";
   }
 
   static bool gzExists(ref string res, ref string head){
@@ -329,13 +326,13 @@ class Session{
         case "Cookie":
           Cookie=h;
           break;
-        case CT:
+        case httpd.CT:
           Content_Type=h;
           break;
-        case CD:
+        case httpd.CD:
           Content_Disposition=h;
           break;
-        case CL:
+        case httpd.CL:
           try{ Content_Length=int.Parse(h); }catch(Exception){ Content_Length=0; }
           break;
         }
@@ -356,70 +353,80 @@ class Session{
       res=HttpUtility.UrlDecode(reso);
       QUERY_STRING=httpd.afterStr1(ref res,"?");
       res=httpd.beforStr1(ref res,"?");
+      sub=httpd.beforStr1(ref Host,":");
       // ".." в запроах недопустимы в целях безопасности
       if(res.IndexOf("..")<0){
-        sub=httpd.afterStr9(ref res,"/");
-        ext=httpd.afterStr9(ref sub,ext);
-      }
-      sub=httpd.beforStr1(ref Host,":");
-      
-      if(ext.Length>0){
-        R=1;
-        switch(ext){
-        case "html":
-          putCT(ref Content_T,"text/html");
-          h1=CC;
-          break;
-        case "svg":
-          putCT(ref Content_T,"image/svg+xml");
-          h1=CC;
-          break;
-        case "gif":
-          putCT(ref Content_T,"image/gif");
-          h1=CC;
-          break;
-        case "png":
-          putCT(ref Content_T,"image/png");
-          h1=CC;
-          break;
-        case "jpeg":
-        case "jpg":
-          putCT(ref Content_T,"image/jpeg");
-          h1=CC;
-          break;
-        case "js":
-          putCT(ref Content_T,"text/javascript");
-          h1=CC;
-          break;
-        case "css":
-          putCT(ref Content_T,"text/css");
-          h1=CC;
-          break;
-        case "ico":
-          putCT(ref Content_T,"image/x-icon");
-          h1=CC;
-          break;
-        case "mp4":
-          putCT(ref Content_T,"video/mp4");
-          h1=CC;
-          break;
-        default:
-          if(ext==httpd.Ext || ext=="prg"){
-            if(ext==httpd.Ext){R=2;}else{R=3;}
-            Content_T="";
+        if(res.EndsWith("/")) res+=httpd.DirectoryIndex;
+        reso=httpd.afterStr9(ref res,"/");
+        ext=httpd.afterStr9(ref reso,ext);
+        if(ext.Length==0){
+          reso=httpd.DocumentRoot+sub+res;
+          if(Directory.Exists(reso)){
+            res+="/"+httpd.DirectoryIndex;
+            ext=httpd.afterStr9(ref httpd.DirectoryIndex,".");
           }else{
-            // Все другие расширения недопустимы в целях безопасности
-            R=0;
+            reso+=".";
+            if(File.Exists(reso+httpd.Ext)){
+              ext=httpd.Ext;
+            }else if(File.Exists(reso+"prg")){
+              ext="prg";
+            }else{
+              ext="html";
+            }
+            res+="."+ext;
           }
-          break;
         }
-      }else{
-        R=1;
+      }
+      R=1;
+      switch(ext){
+      case "html":
         putCT(ref Content_T,"text/html");
-        if(!File.Exists(httpd.DocumentRoot+sub+res)){
-          if(!res.EndsWith("/")) res+="/";
-          res+=httpd.DirectoryIndex;
+        h1=httpd.CC;
+        break;
+      case "svg":
+        putCT(ref Content_T,"image/svg+xml");
+        h1=httpd.CC;
+        break;
+      case "gif":
+        putCT(ref Content_T,"image/gif");
+        h1=httpd.CC;
+        break;
+      case "png":
+        putCT(ref Content_T,"image/png");
+        h1=httpd.CC;
+        break;
+      case "jpeg":
+      case "jpg":
+        putCT(ref Content_T,"image/jpeg");
+        h1=httpd.CC;
+        break;
+      case "js":
+        putCT(ref Content_T,"text/javascript");
+        h1=httpd.CC;
+        break;
+      case "css":
+        putCT(ref Content_T,"text/css");
+        h1=httpd.CC;
+        break;
+      case "ico":
+        putCT(ref Content_T,"image/x-icon");
+        h1=httpd.CC;
+        break;
+      case "mp4":
+        putCT(ref Content_T,"video/mp4");
+        h1=httpd.CC;
+        break;
+      default:
+        Content_T="";
+        if(ext==httpd.Ext){
+          R=2;
+        }else if(ext=="prg"){
+          R=3;
+        }else{
+          // Все другие расширения недопустимы в целях безопасности
+          R=0;
         }
+        break;
       }
       reso=sub+res;
       res=httpd.DocumentRoot+reso;
@@ -450,14 +457,14 @@ class Session{
       }
     }
     if(found == 1){
-      head+=CL+": "+NN+"\r\n\r\n";
+      head+=httpd.CL+": "+NN+"\r\n\r\n";
       i=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
       await Stream.WriteAsync(bytes,0,i);
       await Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
       tt=Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
-        head+=CL+": "+ts.Length+"\r\n\r\n";
+        head+=httpd.CL+": "+ts.Length+"\r\n\r\n";
         k=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
@@ -639,7 +646,7 @@ value2
     }
 
     if(j<0){
-      bytes1=httpd.Ewin.GetBytes(head+CT_T+"\r\nMS VFP is missing in the Windows registry");
+      bytes1=httpd.Ewin.GetBytes(head+httpd.CT_T+"\r\nMS VFP is missing in the Windows registry");
     }else if(j<httpd.db){
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
@@ -721,7 +728,7 @@ value2
         bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
             GetBytes(head+httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()"));
       }catch(Exception e){
-        bytes1=httpd.Ewin.GetBytes(head+CT_T+"\r\nError in VFP: "+e.Message);
+        bytes1=httpd.Ewin.GetBytes(head+httpd.CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -738,7 +745,7 @@ value2
       cont1="";
 
     }else{
-      bytes1=httpd.Ewin.GetBytes(head+CT_T+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
+      bytes1=httpd.Ewin.GetBytes(head+httpd.CT_T+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -871,7 +878,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.3, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.31, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
