@@ -17,7 +17,7 @@ public class https{
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html";
   public const string CT_T=CT+": text/plain\r\n";
   public static int port=8443, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
-                    le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k;
+                    le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="https.net.x.log", logY="https.net.y.log", logZ="",
@@ -63,7 +63,11 @@ public class https{
         Server.Bind(ep);
         Server.Listen(qu);
         if(log9>0) log("\tThe https-server is running...");
-        Thread.Sleep(23);
+        if(vfpa!=null){
+          vfpb[0]=1;
+          vfp[0] = Activator.CreateInstance(vfpa);
+          maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
+        }
         ThreadPool.GetMinThreads(out i, out k);
         if(st>i) ThreadPool.SetMinThreads(st,st);
         Parallel.For(0,st,j => { Session[j] = new Session(Server); });
@@ -683,7 +687,7 @@ value2
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
         filename=https.valStr(ref Content_Disposition,"filename");
-        if(filename.Length>0 || Content_Length>67108832){
+        if(filename.Length>0 || Content_Length>https.maxVFP){
           dirname=https.DirectorySessions+"/"+IP+"_"+Port;
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
           filename = dirname+"/"+filename;
@@ -913,7 +917,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.11, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.12, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
