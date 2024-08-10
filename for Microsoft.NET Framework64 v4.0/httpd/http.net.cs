@@ -15,7 +15,7 @@ public class httpd{
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html";
   public const string CT_T=CT+": text/plain\r\n";
   public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
-                    le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k;
+                    le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -46,7 +46,11 @@ public class httpd{
     Server.Bind(ep);
     Server.Listen(qu);
     if(log9>0) log("\tThe http-server is running...");
-    Thread.Sleep(23);
+    if(vfpa!=null){
+      vfpb[0]=1;
+      vfp[0] = Activator.CreateInstance(vfpa);
+      maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
+    }
     ThreadPool.GetMinThreads(out i, out k);
     if(st>i) ThreadPool.SetMinThreads(st,st);
     Parallel.For(0,st,j => { Session[j] = new Session(Server); });
@@ -55,7 +59,7 @@ public class httpd{
 
   public void StopServer(){
     notexit=false;
-    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){}
+    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) try{ vfp[i].Quit(); }catch(System.Runtime.InteropServices.COMException){}
     if(logFS!=null){
       // Восстановить вывод на консоль
       Console.SetError(TE);
@@ -657,7 +661,7 @@ value2
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
         filename=httpd.valStr(ref Content_Disposition,"filename");
-        if(filename.Length>0 || Content_Length>67108832){
+        if(filename.Length>0 || Content_Length>httpd.maxVFP){
           dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
           filename = dirname+"/"+filename;
