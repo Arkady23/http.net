@@ -176,7 +176,8 @@ public class httpd{
 class Session{
   private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
-                 QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, IP, Port, x1;
+                 QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, Authorization,
+                 IP, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
   private Task AddCache = null;
@@ -202,7 +203,7 @@ class Session{
       x1=IP+" "+Port+"\t";
       bytes = new Byte[i];
       cont1=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING=Cookie=
-             Referer=Origin=User_Agent=Accept_Language="";
+             Referer=Origin=User_Agent=Accept_Language=Authorization="";
 
       while (i>0 && l>0){
         if(k>0){
@@ -218,7 +219,7 @@ class Session{
           l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
                          ref User_Agent, ref Referer, ref Accept_Language, ref Origin,
                          ref Cookie, ref Content_Type, ref Content_Disposition,
-                         ref Content_Length);
+                         ref Authorization, ref Content_Length);
         }else{
           R2=1;
         }
@@ -296,7 +297,7 @@ class Session{
                  ref string Host, ref string User_Agent, ref string Referer,
                  ref string Accept_Language, ref string Origin, ref string Cookie,
                  ref string Content_Type, ref string Content_Disposition,
-                 ref int Content_Length){
+                 ref string Authorization, ref int Content_Length){
     byte b=0;
     string lin=line1(ref bytes, ref cont1, ref k, ref b),n,h;
 
@@ -325,6 +326,9 @@ class Session{
           break;
         case "Cookie":
           Cookie=h;
+          break;
+        case "Authorization":
+          Authorization=h;
           break;
         case httpd.CT:
           Content_Type=h;
@@ -507,15 +511,17 @@ class Session{
     var wsf = new ProcessStartInfo();
 
     wsf.EnvironmentVariables["SCRIPT_FILENAME"] = httpd.fullres(ref res);
+    wsf.EnvironmentVariables["AUTHORIZATION"] = Authorization;
     wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
     wsf.EnvironmentVariables["HTTP_COOKIE"] = Cookie;
     wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
+
     if(Content_Length>0){
       wsf.RedirectStandardInput = true;
       // Поставить разумное ограничение на размер потока
-      if(Content_Type.LastIndexOf("form-")<0 || Content_Length>httpd.post){
+      filename=httpd.valStr(ref Content_Disposition,"filename");
+      if(filename.Length>0 || Content_Length>httpd.post){
         dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
-        filename=httpd.valStr(ref Content_Disposition,"filename");
         if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
         wsf.EnvironmentVariables["POST_FILENAME"] = filename = dirname+"/"+filename;
       }
@@ -609,7 +615,7 @@ value2
       }
       if (ft != null) await ft;
       if (file != null && file.CanRead) file.Close();
-      if (swt != null) try{await swt;}catch(IOException){}
+      if (swt != null) try{ await swt; }catch(IOException){}
       sw.Close();
     }
 
@@ -650,9 +656,9 @@ value2
     }else if(j<httpd.db){
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
-        if(Content_Type.LastIndexOf("form-")<0 || Content_Length>67108832){
+        filename=httpd.valStr(ref Content_Disposition,"filename");
+        if(filename.Length>0 || Content_Length>67108832){
           dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
-          filename=httpd.valStr(ref Content_Disposition,"filename");
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
           filename = dirname+"/"+filename;
         }
@@ -660,6 +666,7 @@ value2
       httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
       httpd.vfp[j].SetVar("SCRIPT_FILENAME",httpd.fullres(ref res));
+      httpd.vfp[j].SetVar("AUTHORIZATION",Authorization);
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       httpd.vfp[j].SetVar("HTTP_COOKIE",Cookie);
       httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
@@ -878,7 +885,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.31, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.32, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
