@@ -119,4 +119,4 @@ If there is an error in the prg file:
 2.24. July 2024. Put request bug.  
 2.3. August 2024. When sending the script result, the "Content-Type: text/html" header is no longer added in order to maintain the continuity of well-known http servers, such as Apache. Just like when using Apache and others, user now has to generate this header himself.  
 2.31. August 2024. Fixed a bug when using the -i command line option. Added automatic substitution of the extension, if it is missing. First, a resource without an extension is perceived as a folder, if such a folder is missing, then default script extension for the script is added, if the file is missing, then the server tries to execute the script with the prg extension, if this file is not found, then the html extension is substituted.    
-2.32. August 2024. The AUTHORIZATION environment variable has been added. Added recognition of the POST length limit for different versions of MS VFP and VFPA.  
+2.32. August 2024. Added recognition of the POST length limit for different versions of MS VFP and VFPA.  
