@@ -18,7 +18,7 @@ public class https{
   public const string CT_T=CT+": text/plain\r\n";
   public static int port=8443, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
                     le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k, maxVFP;
-  public static string DocumentRoot="../www/", DirectoryIndex=DI,
+  public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="https.net.x.log", logY="https.net.y.log", logZ="",
                        DirectorySessions="Sessions", CerFile="a.kornienko.ru.pfx";
@@ -198,9 +198,8 @@ public class https{
 
 class Session{
   private int i,k,Content_Length;
-  private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
-                 QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, Authorization,
-                 IP, Port, x1;
+  private string cont1, h1, reso, res, head, heads, Host, Content_Disposition,
+                 QUERY_STRING, IP, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
   private Task AddCache = null;
@@ -232,8 +231,7 @@ class Session{
         i=https.bu;
         k=Content_Length=0;
         bytes = new Byte[i];
-        cont1=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING=Cookie=
-               Referer=Origin=User_Agent=Accept_Language=Authorization="";
+        cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
         while (i>0 && l>0){
           if(k>0){
             cont1=https.Edos.GetString(bytes,k,i-k);
@@ -246,9 +244,7 @@ class Session{
           }
           if(i>0){
             l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
-                           ref User_Agent, ref Referer, ref Accept_Language, ref Origin,
-                           ref Cookie, ref Content_Type, ref Content_Disposition,
-                           ref Authorization, ref Content_Length);
+                  ref Content_Disposition, ref Content_Length, ref heads);
           }else{
             R2=1;
           }
@@ -324,10 +320,8 @@ class Session{
   }
 
   static byte getHeaders(ref byte[] bytes, ref string cont1, ref int k, ref string reso,
-                 ref string Host, ref string User_Agent, ref string Referer,
-                 ref string Accept_Language, ref string Origin, ref string Cookie,
-                 ref string Content_Type, ref string Content_Disposition,
-                 ref string Authorization, ref int Content_Length){
+                ref string Host, ref string Content_Disposition, ref int Content_Length,
+                ref string heads){
     byte b=0;
     string lin=line1(ref bytes, ref cont1, ref k, ref b),n,h;
 
@@ -342,27 +336,6 @@ class Session{
         case "Host":
           Host=h;
           break;
-        case "User-Agent":
-          User_Agent=h;
-          break;
-        case "Referer":
-          Referer=h;
-          break;
-        case "Accept-Language":
-          Accept_Language=h;
-          break;
-        case "Origin":
-          Origin=h;
-          break;
-        case "Cookie":
-          Cookie=h;
-          break;
-        case "Authorization":
-          Authorization=h;
-          break;
-        case https.CT:
-          Content_Type=h;
-          break;
         case https.CD:
           Content_Disposition=h;
           break;
@@ -370,6 +343,7 @@ class Session{
           try{ Content_Length=int.Parse(h); }catch(Exception){ Content_Length=0; }
           break;
         }
+        heads+=lin+"\r\n";
       }else{
         h=https.afterStr1(ref lin," ");
         h=https.beforStr9(ref h," ");
@@ -541,9 +515,8 @@ class Session{
     var wsf = new ProcessStartInfo();
 
     wsf.EnvironmentVariables["SCRIPT_FILENAME"] = https.fullres(ref res);
-    wsf.EnvironmentVariables["AUTHORIZATION"] = Authorization;
     wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
-    wsf.EnvironmentVariables["HTTP_COOKIE"] = Cookie;
+    wsf.EnvironmentVariables["HTTP_HEADERS"] = heads;
     wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
 
     if(Content_Length>0){
@@ -690,15 +663,14 @@ value2
         if(filename.Length>0 || Content_Length>https.maxVFP){
           dirname=https.DirectorySessions+"/"+IP+"_"+Port;
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
-          filename = dirname+"/"+filename;
+          filename = https.Folder+"/"+dirname+"/"+filename;
         }
       }
       https.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       https.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+https.beforStr9(ref res,"/")+"\"))");
       https.vfp[j].SetVar("SCRIPT_FILENAME",https.fullres(ref res));
-      https.vfp[j].SetVar("AUTHORIZATION",Authorization);
       https.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
-      https.vfp[j].SetVar("HTTP_COOKIE",Cookie);
+      https.vfp[j].SetVar("HTTP_HEADERS",heads);
       https.vfp[j].SetVar("REMOTE_ADDR",IP);
       https.vfp[j].SetVar("POST_FILENAME",filename);
       https.vfp[j].SetVar("ERROR_MESS","");
@@ -795,9 +767,11 @@ class main{
   public static https https = null;
 
   static void Main(string[] Args){
-    Directory.SetCurrentDirectory(System.IO.Path.GetDirectoryName(
-              System.Reflection.Assembly.GetEntryAssembly().Location));
+    string Folder=System.IO.Path.GetDirectoryName(
+           System.Reflection.Assembly.GetEntryAssembly().Location);
+    Directory.SetCurrentDirectory(Folder);
     https = new https();
+    https.Folder=Folder;
     if(getArgs(Args)){
       if(https.Args.Length==0){
         if(https.Proc.Substring(https.Proc.Length-11,11)=="cscript.exe" ||
@@ -917,7 +891,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.12, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.13, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
