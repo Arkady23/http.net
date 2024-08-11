@@ -16,7 +16,7 @@ public class httpd{
   public const string CT_T=CT+": text/plain\r\n";
   public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
                     le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k, maxVFP;
-  public static string DocumentRoot="../www/", DirectoryIndex=DI,
+  public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
@@ -179,9 +179,8 @@ public class httpd{
 
 class Session{
   private int i,k,Content_Length;
-  private string cont1, h1, reso, res, head, Host, Content_Type, Content_Disposition, Cookie,
-                 QUERY_STRING, User_Agent, Referer, Accept_Language, Origin, Authorization,
-                 IP, Port, x1;
+  private string cont1, h1, reso, res, head, heads, Host, Content_Disposition,
+                 QUERY_STRING, IP, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
   private Task AddCache = null;
@@ -206,9 +205,7 @@ class Session{
       Port=Point.Port.ToString();
       x1=IP+" "+Port+"\t";
       bytes = new Byte[i];
-      cont1=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING=Cookie=
-             Referer=Origin=User_Agent=Accept_Language=Authorization="";
-
+      cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
       while (i>0 && l>0){
         if(k>0){
           cont1=httpd.Edos.GetString(bytes,k,i-k);
@@ -221,9 +218,7 @@ class Session{
         }
         if(i>0){
           l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
-                         ref User_Agent, ref Referer, ref Accept_Language, ref Origin,
-                         ref Cookie, ref Content_Type, ref Content_Disposition,
-                         ref Authorization, ref Content_Length);
+                ref Content_Disposition, ref Content_Length, ref heads);
         }else{
           R2=1;
         }
@@ -298,10 +293,8 @@ class Session{
   }
 
   static byte getHeaders(ref byte[] bytes, ref string cont1, ref int k, ref string reso,
-                 ref string Host, ref string User_Agent, ref string Referer,
-                 ref string Accept_Language, ref string Origin, ref string Cookie,
-                 ref string Content_Type, ref string Content_Disposition,
-                 ref string Authorization, ref int Content_Length){
+                ref string Host, ref string Content_Disposition, ref int Content_Length,
+                ref string heads){
     byte b=0;
     string lin=line1(ref bytes, ref cont1, ref k, ref b),n,h;
 
@@ -316,27 +309,6 @@ class Session{
         case "Host":
           Host=h;
           break;
-        case "User-Agent":
-          User_Agent=h;
-          break;
-        case "Referer":
-          Referer=h;
-          break;
-        case "Accept-Language":
-          Accept_Language=h;
-          break;
-        case "Origin":
-          Origin=h;
-          break;
-        case "Cookie":
-          Cookie=h;
-          break;
-        case "Authorization":
-          Authorization=h;
-          break;
-        case httpd.CT:
-          Content_Type=h;
-          break;
         case httpd.CD:
           Content_Disposition=h;
           break;
@@ -344,6 +316,7 @@ class Session{
           try{ Content_Length=int.Parse(h); }catch(Exception){ Content_Length=0; }
           break;
         }
+        heads+=lin+"\r\n";
       }else{
         h=httpd.afterStr1(ref lin," ");
         h=httpd.beforStr9(ref h," ");
@@ -515,9 +488,8 @@ class Session{
     var wsf = new ProcessStartInfo();
 
     wsf.EnvironmentVariables["SCRIPT_FILENAME"] = httpd.fullres(ref res);
-    wsf.EnvironmentVariables["AUTHORIZATION"] = Authorization;
     wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
-    wsf.EnvironmentVariables["HTTP_COOKIE"] = Cookie;
+    wsf.EnvironmentVariables["HTTP_HEADERS"] = heads;
     wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
 
     if(Content_Length>0){
@@ -664,15 +636,14 @@ value2
         if(filename.Length>0 || Content_Length>httpd.maxVFP){
           dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
-          filename = dirname+"/"+filename;
+          filename = httpd.Folder+"/"+dirname+"/"+filename;
         }
       }
       httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
       httpd.vfp[j].SetVar("SCRIPT_FILENAME",httpd.fullres(ref res));
-      httpd.vfp[j].SetVar("AUTHORIZATION",Authorization);
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
-      httpd.vfp[j].SetVar("HTTP_COOKIE",Cookie);
+      httpd.vfp[j].SetVar("HTTP_HEADERS",heads);
       httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
       httpd.vfp[j].SetVar("POST_FILENAME",filename);
       httpd.vfp[j].SetVar("ERROR_MESS","");
@@ -769,9 +740,11 @@ class main{
   public static httpd httpd = null;
 
   static void Main(string[] Args){
-    Directory.SetCurrentDirectory(System.IO.Path.GetDirectoryName(
-              System.Reflection.Assembly.GetEntryAssembly().Location));
+    string Folder=System.IO.Path.GetDirectoryName(
+           System.Reflection.Assembly.GetEntryAssembly().Location);
+    Directory.SetCurrentDirectory(Folder);
     httpd = new httpd();
+    httpd.Folder=Folder;
     if(getArgs(Args)){
       if(httpd.Args.Length==0){
         if(httpd.Proc.Substring(httpd.Proc.Length-11,11)=="cscript.exe" ||
@@ -889,7 +862,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.32, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.33, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
