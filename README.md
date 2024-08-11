@@ -76,7 +76,7 @@ Parameters:                                                                  Def
          "<h3>Переменные окружения:</h3>" + ;
          "SCRIPT_FILENAME=" + SCRIPT_FILENAME + ";<br>" + c13 + ;
          "QUERY_STRING=" + QUERY_STRING + ";<br>" + c13+ ;
-         "HTTP_COOKIE=" + HTTP_COOKIE + ";<br>" + c13 + ;
+         "HTTP_COOKIE=" + STRE(HTTP_HEADERS,"Cookie:",c13) + ";<br>" + c13 + ;
          "REMOTE_ADDR=" + REMOTE_ADDR + ";<br>" + c13 + ;
          "STD_INPUT=" + STD_INPUT + ";<br>" + c13 + ;
          "POST_FILENAME=" + POST_FILENAME + ";<br>" + c13
