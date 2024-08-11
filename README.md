@@ -46,7 +46,7 @@ Parameters:                                                                  Def
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
              variable POST_FILENAME. Other generated environment variables -
-             SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. If
+             SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS, REMOTE_ADDR. If
              the form-... directive is missing from the request data, then
              incoming data stream will be placed entirely in a file. This
              feature can be used to transfer files to the server. In this
