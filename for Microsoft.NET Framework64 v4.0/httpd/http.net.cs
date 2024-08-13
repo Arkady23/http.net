@@ -639,6 +639,12 @@ value2
           filename = httpd.Folder+"/"+dirname+"/"+filename;
         }
       }
+
+      try{
+        httpd.vfp[j].SetVar("ERROR_MESS","");
+      }catch(System.Runtime.InteropServices.COMException){
+        httpd.vfp[j] = Activator.CreateInstance(httpd.vfpa);
+      }
       httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
       httpd.vfp[j].SetVar("SCRIPT_FILENAME",httpd.fullres(ref res));
@@ -646,7 +652,6 @@ value2
       httpd.vfp[j].SetVar("HTTP_HEADERS",heads);
       httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
       httpd.vfp[j].SetVar("POST_FILENAME",filename);
-      httpd.vfp[j].SetVar("ERROR_MESS","");
       httpd.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
 
       if(Content_Length>0){
@@ -862,7 +867,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.33, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.3.4, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -899,7 +904,7 @@ Parameters:                                                                  Def
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
              variable POST_FILENAME. Other generated environment variables -
-             SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. If
+             SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS, REMOTE_ADDR. If
              the form-... directive is missing from the request data, then
              incoming data stream will be placed entirely in a file. This
              feature can be used to transfer files to the server. In this
