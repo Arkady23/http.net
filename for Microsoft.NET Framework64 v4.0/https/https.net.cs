@@ -666,6 +666,12 @@ value2
           filename = https.Folder+"/"+dirname+"/"+filename;
         }
       }
+
+      try{
+        https.vfp[j].SetVar("ERROR_MESS","");
+      }catch(System.Runtime.InteropServices.COMException){
+        https.vfp[j] = Activator.CreateInstance(https.vfpa);
+      }
       https.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       https.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+https.beforStr9(ref res,"/")+"\"))");
       https.vfp[j].SetVar("SCRIPT_FILENAME",https.fullres(ref res));
@@ -673,7 +679,6 @@ value2
       https.vfp[j].SetVar("HTTP_HEADERS",heads);
       https.vfp[j].SetVar("REMOTE_ADDR",IP);
       https.vfp[j].SetVar("POST_FILENAME",filename);
-      https.vfp[j].SetVar("ERROR_MESS","");
       https.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
 
       if(Content_Length>0){
@@ -891,7 +896,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.13, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.1.4, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -932,7 +937,7 @@ Parameters:                                                                  Def
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
              variable POST_FILENAME. Other generated environment variables -
-             SCRIPT_FILENAME, QUERY_STRING, HTTP_COOKIE, REMOTE_ADDR. If
+             SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS, REMOTE_ADDR. If
              the form-... directive is missing from the request data, then
              incoming data stream will be placed entirely in a file. This
              feature can be used to transfer files to the server. In this
