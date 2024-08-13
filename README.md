@@ -121,3 +121,4 @@ If there is an error in the prg file:
 2.31. August 2024. Fixed a bug when using the -i command line option. Added automatic substitution of the extension, if it is missing. First, a resource without an extension is perceived as a folder, if such a folder is missing, then default script extension for the script is added, if the file is missing, then the server tries to execute the script with the prg extension, if this file is not found, then the html extension is substituted.    
 2.32. August 2024. Added recognition of the POST length limit for different versions of MS VFP and VFPA.  
 2.33. August 2024. The HTTP_COOKIE environment variable has been removed, and HTTP_HEADERS has been added.  
+2.3.4. August 2024. Fixed VFP COM crash error. The version has been moved from the Debug state to Release.  
