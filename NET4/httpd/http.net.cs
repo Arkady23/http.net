@@ -875,7 +875,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.3.4, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.3.5, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
