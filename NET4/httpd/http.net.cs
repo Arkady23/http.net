@@ -53,8 +53,13 @@ public class httpd{
     }
     ThreadPool.GetMinThreads(out i, out k);
     if(st>i) ThreadPool.SetMinThreads(st,st);
-    Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-    if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
+    try{
+      Parallel.For(0,st,j => { Session[j] = new Session(Server); });
+      if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
+    }catch(Exception){
+      Console.WriteLine("Try http.net(x86) version of the server");
+      notexit=false;
+    }
   }
 
   public void StopServer(){
@@ -721,6 +726,7 @@ value2
       try{
         httpd.vfp[j].DoCmd("on erro _box=_box");
         httpd.vfp[j].DoCmd("clea even");
+        httpd.vfp[j].DoCmd("clea prog");
         httpd.vfp[j].DoCmd("clea all");
         httpd.vfp[j].DoCmd("clos data all");
         httpd.vfp[j].DoCmd("clos all");
@@ -758,10 +764,12 @@ class main{
         httpd.Args+=" ";
       }
       httpd.RunServer();
-      AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
-      Console.TreatControlCAsInput=true;
-      Console.ReadKey(true);
-      httpd.StopServer();
+      if(httpd.notexit){
+        AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
+        Console.TreatControlCAsInput=true;
+        Console.ReadKey(true);
+        httpd.StopServer();
+      }
       Console.WriteLine("Server stoped :(((");
     }
   }
