@@ -57,7 +57,7 @@ public class httpd{
       Parallel.For(0,st,j => { Session[j] = new Session(Server); });
       if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
     }catch(Exception){
-      Console.WriteLine("Try http.net(x86) version of the server");
+      if(log9>0) log("\t"+"There were problems when creating threads. Try updating Windows.");
       notexit=false;
     }
   }
