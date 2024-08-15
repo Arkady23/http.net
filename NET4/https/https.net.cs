@@ -70,8 +70,13 @@ public class https{
         }
         ThreadPool.GetMinThreads(out i, out k);
         if(st>i) ThreadPool.SetMinThreads(st,st);
-        Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-        if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
+        try{
+          Parallel.For(0,st,j => { Session[j] = new Session(Server); });
+          if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
+        }catch(Exception){
+          Console.WriteLine("Try https.net(x86) version of the server");
+          notexit=false;
+        }
       }
     }
   }
@@ -748,6 +753,7 @@ value2
       try{
         https.vfp[j].DoCmd("on erro _box=_box");
         https.vfp[j].DoCmd("clea even");
+        https.vfp[j].DoCmd("clea prog");
         https.vfp[j].DoCmd("clea all");
         https.vfp[j].DoCmd("clos data all");
         https.vfp[j].DoCmd("clos all");
@@ -786,10 +792,12 @@ class main{
       }
       https.RunServer();
       if(https.Cert!=null){
-        AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
-        Console.TreatControlCAsInput=true;
-        Console.ReadKey(true);
-        https.StopServer();
+        if(https.notexit){
+          AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
+          Console.TreatControlCAsInput=true;
+          Console.ReadKey(true);
+          https.StopServer();
+        }
         Console.WriteLine("Server stoped :(((");
       }
     }
