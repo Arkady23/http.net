@@ -356,6 +356,8 @@ class Session{
               ext=httpd.Ext;
             }else if(File.Exists(reso+"prg")){
               ext="prg";
+            }else if(File.Exists(reso)){
+              ext="";
             }else{
               ext="html";
             }
@@ -401,6 +403,9 @@ class Session{
       case "mp4":
         putCT(ref Content_T,"video/mp4");
         h1=httpd.CC;
+        break;
+      case "":
+        Content_T=httpd.CT_T;
         break;
       default:
         Content_T="";
@@ -492,11 +497,6 @@ class Session{
     string dirname="", filename="";
     var wsf = new ProcessStartInfo();
 
-    wsf.EnvironmentVariables["SCRIPT_FILENAME"] = httpd.fullres(ref res);
-    wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
-    wsf.EnvironmentVariables["HTTP_HEADERS"] = heads;
-    wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
-
     if(Content_Length>0){
       wsf.RedirectStandardInput = true;
       // Поставить разумное ограничение на размер потока
@@ -504,9 +504,15 @@ class Session{
       if(filename.Length>0 || Content_Length>httpd.post){
         dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
         if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
-        wsf.EnvironmentVariables["POST_FILENAME"] = filename = dirname+"/"+filename;
+        filename = dirname+"/"+filename;
       }
     }
+
+    wsf.EnvironmentVariables["SCRIPT_FILENAME"] = httpd.fullres(ref res);
+    wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
+    wsf.EnvironmentVariables["POST_FILENAME"] = filename;
+    wsf.EnvironmentVariables["HTTP_HEADERS"] = heads;
+    wsf.EnvironmentVariables["REMOTE_ADDR"] = IP;
     wsf.RedirectStandardOutput = true;
     wsf.UseShellExecute = false;
     wsf.CreateNoWindow = true;
@@ -639,9 +645,9 @@ value2
         // Ограничение на размер потока определяется возможностями VFP на размер строки
         filename=httpd.valStr(ref Content_Disposition,"filename");
         if(filename.Length>0 || Content_Length>httpd.maxVFP){
-          dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
-          filename = httpd.Folder+"/"+dirname+"/"+filename;
+          dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
+          filename = dirname+"/"+filename;
         }
       }
 
@@ -652,11 +658,11 @@ value2
       }
       httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
+      httpd.vfp[j].SetVar("POST_FILENAME",filename.Length>0?httpd.Folder+filename:"");
       httpd.vfp[j].SetVar("SCRIPT_FILENAME",httpd.fullres(ref res));
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       httpd.vfp[j].SetVar("HTTP_HEADERS",heads);
       httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
-      httpd.vfp[j].SetVar("POST_FILENAME",filename);
       httpd.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
 
       if(Content_Length>0){
