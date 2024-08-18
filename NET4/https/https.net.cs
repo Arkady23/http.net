@@ -822,6 +822,10 @@ class main{
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
       switch (Args[i]){
+      case "-c":
+        i++;
+        if(i < Args.Length) https.CerFile=Args[i];
+        break;
       case "-p":
         i++;
         if(i < Args.Length){
@@ -911,7 +915,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.1.5, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.1.7, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -969,6 +973,7 @@ Parameters:                                                                  Def
         l=false;
         break;
       }
+      if(!l) break;
     }
     return l;
   }
