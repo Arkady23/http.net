@@ -238,7 +238,7 @@ class Session{
         bytes = new Byte[i];
         cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
         while (i>0 && l>0){
-          if(k>0){
+          if(k>0 && i>k){
             cont1=https.Edos.GetString(bytes,k,i-k);
             k=0;
           }
@@ -515,7 +515,7 @@ class Session{
       }
     }
 
-    if(tt!=null) try{await tt;}catch(IOException){}
+    if(tt!=null) try{ await tt; }catch(IOException){}
   }
 
   async Task send_wsf(SslStream Stream){
@@ -822,10 +822,6 @@ class main{
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
       switch (Args[i]){
-      case "-c":
-        i++;
-        if(i < Args.Length) https.CerFile=Args[i];
-        break;
       case "-p":
         i++;
         if(i < Args.Length){
@@ -902,6 +898,10 @@ class main{
         i++;
         if(i < Args.Length) https.DirectoryIndex=Args[i];
         break;
+      case "-c":
+        i++;
+        if(i < Args.Length) https.CerFile=Args[i];
+        break;
       case "-proc":
         i++;
         if(i < Args.Length) https.Proc=Args[i];
@@ -915,7 +915,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.1.7, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.1.8, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
