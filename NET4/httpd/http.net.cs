@@ -212,7 +212,7 @@ class Session{
       bytes = new Byte[i];
       cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
       while (i>0 && l>0){
-        if(k>0){
+        if(k>0 && i>k){
           cont1=httpd.Edos.GetString(bytes,k,i-k);
           k=0;
         }
@@ -488,7 +488,7 @@ class Session{
       }
     }
 
-    if(tt!=null) try{await tt;}catch(IOException){}
+    if(tt!=null) try{ await tt; }catch(IOException){}
   }
 
   async Task send_wsf(System.Net.Sockets.NetworkStream Stream){
@@ -881,7 +881,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.3.7, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.3.8, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
