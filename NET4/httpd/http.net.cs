@@ -12,8 +12,9 @@ using System.Collections.Generic;
 
 public class httpd{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
-                      CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html";
-  public const string CT_T=CT+": text/plain\r\n";
+                      CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
+                      H1="HTTP/1.1 ";
+  public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
   public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
                     le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
@@ -64,7 +65,8 @@ public class httpd{
 
   public void StopServer(){
     notexit=false;
-    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) try{ vfp[i].Quit(); }catch(System.Runtime.InteropServices.COMException){}
+    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0)
+                     try{ vfp[i].Quit(); }catch(System.Runtime.InteropServices.COMException){}
     if(logFS!=null){
       // Восстановить вывод на консоль
       Console.SetError(TE);
@@ -229,12 +231,11 @@ class Session{
         }
       }
 
-      if(i>=0)
-        res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
-
+      if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
+                   ref h1, ref Content_T);
       if(R>0){
         httpd.log2(x1+res);
-        head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
+        head="Date: "+dt1+"\r\n"+h1+Content_T;
         if(R>1){
           if(File.Exists(res)){
             if(R==2){
@@ -333,7 +334,7 @@ class Session{
   }
 
   static string prepResource(ref string reso, ref string QUERY_STRING, ref string Host,
-                             ref byte R, ref string h1, ref string Content_T){
+                             ref byte R, ref byte R1, ref string h1, ref string Content_T){
     string sub,res="",ext=".";
     if(reso.Length>0 && Host.Length>0){
       res=HttpUtility.UrlDecode(reso);
@@ -351,6 +352,7 @@ class Session{
             res+="/"+httpd.DirectoryIndex;
             ext=httpd.afterStr9(ref httpd.DirectoryIndex,".");
           }else{
+            R1=1;
             reso+=".";
             if(File.Exists(reso+httpd.Ext)){
               ext=httpd.Ext;
@@ -432,7 +434,8 @@ class Session{
 
     Task tt = null;
     byte found;
-    int i,j,k,m=0;
+    int i,j,k,p,q,m=0;
+    head=httpd.OK+head+httpd.CL+": ";
     if(NN > httpd.le){
       found=0;
     }else{
@@ -448,21 +451,24 @@ class Session{
       }
     }
     if(found == 1){
-      head+=httpd.CL+": "+NN+"\r\n\r\n";
+      head+=NN+"\r\n\r\n";
       i=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
       await Stream.WriteAsync(bytes,0,i);
       await Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
       tt=Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
-        head+=httpd.CL+": "+ts.Length+"\r\n\r\n";
+        head+=ts.Length+"\r\n\r\n";
         k=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
             await AddCache;
-            Array.Copy(bytes,k,httpd.Files[key],m,i);
-            m+=i;
+            p=i; q=k;
+            AddCache = Task.Run(() =>{
+              Array.Copy(bytes,q,httpd.Files[key],m,p);
+              m+=p;
+            });
           }
           if(k>0){
             i+=k;
@@ -607,7 +613,20 @@ value2
     }
 
     // Вывод полученных данных wsf-скрипта
-    bytes1=httpd.Ewin.GetBytes(head+Proc.StandardOutput.ReadToEnd());
+    if(R1==0){
+      bytes1=httpd.Ewin.GetBytes(httpd.OK+head+Proc.StandardOutput.ReadToEnd());
+    }else{
+      cont1=Proc.StandardOutput.ReadToEnd();
+      R1=(byte)cont1[0];
+      if (R1>53||R1<49){
+        head=httpd.OK+head;
+        i=0;
+      }else{
+        i=cont1.IndexOf("\n")+1;
+        head=httpd.H1+cont1.Substring(0,i)+head;
+      }
+      bytes1=httpd.Ewin.GetBytes(head+cont1.Substring(i));
+    }
 
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -639,7 +658,8 @@ value2
     }
 
     if(j<0){
-      bytes1=httpd.Ewin.GetBytes(head+httpd.CT_T+"\r\nMS VFP is missing in the Windows registry");
+      bytes1=httpd.Ewin.GetBytes(httpd.OK+head+httpd.CT_T+
+             "\r\nMS VFP is missing in the Windows registry");
     }else if(j<httpd.db){
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
@@ -723,10 +743,24 @@ value2
       }
       httpd.vfp[j].SetVar("STD_INPUT",cont1);
       try{
-        bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
-            GetBytes(head+httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()"));
+        if(R1==0){
+          bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
+              GetBytes(httpd.OK+head+httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()"));
+        }else{
+          cont1=httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()");
+          R1=(byte)cont1[0];
+          if (R1>53||R1<49){
+            head=httpd.OK+head;
+            i=0;
+          }else{
+            i=cont1.IndexOf("\n")+1;
+            head=httpd.H1+cont1.Substring(0,i)+head;
+          }
+          bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
+              GetBytes(head+cont1.Substring(i));
+        }
       }catch(Exception e){
-        bytes1=httpd.Ewin.GetBytes(head+httpd.CT_T+"\r\nError in VFP: "+e.Message);
+        bytes1=httpd.Ewin.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -741,10 +775,10 @@ value2
       }catch(Exception){
         httpd.vfpb[j]=0;
       }
-      cont1="";
 
     }else{
-      bytes1=httpd.Ewin.GetBytes(head+httpd.CT_T+"\r\nAll "+httpd.db.ToString()+" VFP processes are busy");
+      bytes1=httpd.Ewin.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nAll "+httpd.db.ToString()+
+             " VFP processes are busy");
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -881,7 +915,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.3.8, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.3.9, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
