@@ -14,8 +14,9 @@ using System.Security.Cryptography.X509Certificates;
 
 public class https{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
-                      CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html";
-  public const string CT_T=CT+": text/plain\r\n";
+                      CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
+                      H1="HTTP/1.1 ";
+  public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
   public static int port=8443, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
                     le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
@@ -83,7 +84,8 @@ public class https{
 
   public void StopServer(){
     notexit=false;
-    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0) try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){}
+    if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0)
+                        try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){}
     if(logFS!=null){
       // Восстановить вывод на консоль
       Console.SetError(TE);
@@ -226,7 +228,8 @@ class Session{
       x1=IP+" "+Port+"\t";
       R=R1=R2=0;
       try{
-        Stream.AuthenticateAsServer(https.Cert,false,System.Security.Authentication.SslProtocols.Tls12,false);
+        Stream.AuthenticateAsServer(https.Cert,false,
+               System.Security.Authentication.SslProtocols.Tls12,false);
       }catch(Exception e){
         R=6;
         https.log2(x1+e.Message);
@@ -255,12 +258,11 @@ class Session{
           }
         }
 
-        if(i>=0)
-          res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref h1, ref Content_T);
-
+        if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
+                                  ref h1, ref Content_T);
         if(R>0){
           https.log2(x1+res);
-          head="HTTP/1.1 200 OK\r\nDate: "+dt1+"\r\n"+h1+Content_T;
+          head="Date: "+dt1+"\r\n"+h1+Content_T;
           if(R>1){
             if(File.Exists(res)){
               if(R==2){
@@ -360,7 +362,7 @@ class Session{
   }
 
   static string prepResource(ref string reso, ref string QUERY_STRING, ref string Host,
-                             ref byte R, ref string h1, ref string Content_T){
+                             ref byte R, ref byte R1, ref string h1, ref string Content_T){
     string sub,res="",ext=".";
     if(reso.Length>0 && Host.Length>0){
       res=HttpUtility.UrlDecode(reso);
@@ -378,6 +380,7 @@ class Session{
             res+="/"+https.DirectoryIndex;
             ext=https.afterStr9(ref https.DirectoryIndex,".");
           }else{
+            R1=1;
             reso+=".";
             if(File.Exists(reso+https.Ext)){
               ext=https.Ext;
@@ -459,7 +462,8 @@ class Session{
 
     Task tt = null;
     byte found;
-    int i,j,k,m=0;
+    int i,j,k,p,q,m=0;
+    head=https.OK+head+https.CL+": ";
     if(NN > https.le){
       found=0;
     }else{
@@ -475,21 +479,24 @@ class Session{
       }
     }
     if(found == 1){
-      head+=https.CL+": "+NN+"\r\n\r\n";
+      head+=NN+"\r\n\r\n";
       i=https.Edos.GetBytes(head,0,head.Length,bytes,0);
       await Stream.WriteAsync(bytes,0,i);
       await Stream.WriteAsync(https.Files[key],0,https.Files[key].Length);
       tt=Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
-        head+=https.CL+": "+ts.Length+"\r\n\r\n";
+        head+=ts.Length+"\r\n\r\n";
         k=https.Edos.GetBytes(head,0,head.Length,bytes,0);
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
             await AddCache;
-            Array.Copy(bytes,k,https.Files[key],m,i);
-            m+=i;
+            p=i; q=k;
+            AddCache = Task.Run(() =>{
+              Array.Copy(bytes,q,https.Files[key],m,p);
+              m+=p;
+            });
           }
           if(k>0){
             i+=k;
@@ -635,7 +642,20 @@ value2
     }
 
     // Вывод полученных данных wsf-скрипта
-    bytes1=https.Ewin.GetBytes(head+Proc.StandardOutput.ReadToEnd());
+    if(R1==0){
+      bytes1=https.Ewin.GetBytes(https.OK+head+Proc.StandardOutput.ReadToEnd());
+    }else{
+      cont1=Proc.StandardOutput.ReadToEnd();
+      R1=(byte)cont1[0];
+      if (R1>53||R1<49){
+        head=https.OK+head;
+        i=0;
+      }else{
+        i=cont1.IndexOf("\n")+1;
+        head=https.H1+cont1.Substring(0,i)+head;
+      }
+      bytes1=https.Ewin.GetBytes(head+cont1.Substring(i));
+    }
 
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -667,7 +687,8 @@ value2
     }
 
     if(j<0){
-      bytes1=https.Ewin.GetBytes(head+https.CT_T+"\r\nMS VFP is missing in the Windows registry");
+      bytes1=https.Ewin.GetBytes(https.OK+head+https.CT_T+
+             "\r\nMS VFP is missing in the Windows registry");
     }else if(j<https.db){
       if(Content_Length>0){
         // Ограничение на размер потока определяется возможностями VFP на размер строки
@@ -751,10 +772,24 @@ value2
       }
       https.vfp[j].SetVar("STD_INPUT",cont1);
       try{
-        bytes1=Encoding.GetEncoding(https.vfp[j].Eval("CPCURRENT()")).
-            GetBytes(head+https.vfp[j].Eval(https.beforStr9(ref prg,".prg")+"()"));
+        if(R1==0){
+          bytes1=Encoding.GetEncoding(https.vfp[j].Eval("CPCURRENT()")).
+              GetBytes(https.OK+head+https.vfp[j].Eval(https.beforStr9(ref prg,".prg")+"()"));
+        }else{
+          cont1=https.vfp[j].Eval(https.beforStr9(ref prg,".prg")+"()");
+          R1=(byte)cont1[0];
+          if (R1>53||R1<49){
+            head=https.OK+head;
+            i=0;
+          }else{
+            i=cont1.IndexOf("\n")+1;
+            head=https.H1+cont1.Substring(0,i)+head;
+          }
+          bytes1=Encoding.GetEncoding(https.vfp[j].Eval("CPCURRENT()")).
+              GetBytes(head+cont1.Substring(i));
+        }
       }catch(Exception e){
-        bytes1=https.Ewin.GetBytes(head+https.CT_T+"\r\nError in VFP: "+e.Message);
+        bytes1=https.Ewin.GetBytes(https.OK+head+https.CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -769,10 +804,10 @@ value2
       }catch(Exception){
         https.vfpb[j]=0;
       }
-      cont1="";
 
     }else{
-      bytes1=https.Ewin.GetBytes(head+https.CT_T+"\r\nAll "+https.db.ToString()+" VFP processes are busy");
+      bytes1=https.Ewin.GetBytes(https.OK+head+https.CT_T+"\r\nAll "+https.db.ToString()+
+             " VFP processes are busy");
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
@@ -915,7 +950,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.1.8, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.1.9, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
