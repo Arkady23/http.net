@@ -190,7 +190,6 @@ class Session{
                  QUERY_STRING, IP, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
-  private Task AddCache = null;
 
   public Session(Socket Server){
     Accept(Server);
@@ -432,22 +431,17 @@ class Session{
     long NN = new System.IO.FileInfo(res).Length;
     string key = res+File.GetLastWriteTime(res).ToString("yyyyMMddHHmmssfff");
 
-    Task tt = null;
     byte found;
-    int i,j,k,p,q,m=0;
+    int i,j,k,m=0;
     head=httpd.OK+head+httpd.CL+": ";
     if(NN > httpd.le){
       found=0;
     }else{
-      if(AddCache!=null) await AddCache;
       if(httpd.Files.ContainsKey(key)){
         found = 1;
       }else{
         found = 7;
-        AddCache = Task.Run(() =>{
-          try{ httpd.Files.Add(key, new byte[NN]);
-          }catch (ArgumentException){}
-        });
+        try{ httpd.Files.Add(key, new byte[NN]); }catch (ArgumentException){}
       }
     }
     if(found == 1){
@@ -455,7 +449,7 @@ class Session{
       i=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
       await Stream.WriteAsync(bytes,0,i);
       await Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
-      tt=Stream.WriteAsync(bytes,i-2,2);
+      await Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
         head+=ts.Length+"\r\n\r\n";
@@ -463,12 +457,8 @@ class Session{
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
-            await AddCache;
-            p=i; q=k;
-            AddCache = Task.Run(() =>{
-              Array.Copy(bytes,q,httpd.Files[key],m,p);
-              m+=p;
-            });
+            Array.Copy(bytes,k,httpd.Files[key],m,i);
+            m+=i;
           }
           if(k>0){
             i+=k;
@@ -478,23 +468,19 @@ class Session{
           if(ts.Length==ts.Position){
             // Добавляем в конец перенос строки
             if(i+2>=bytes.Length){
-              if(tt!=null) await tt;
-              tt=Stream.WriteAsync(bytes,0,i);
+              await Stream.WriteAsync(bytes,0,i);
               i=0;
             }
-            bytes[i]=10;
-            i++;
             bytes[i]=13;
             i++;
+            bytes[i]=10;
+            i++;
           }
-          if(tt!=null) await tt;
-          tt=Stream.WriteAsync(bytes,0,i);
+          await Stream.WriteAsync(bytes,0,i);
         }
         ts.Close();
       }
     }
-
-    if(tt!=null) try{ await tt; }catch(IOException){}
   }
 
   async Task send_wsf(System.Net.Sockets.NetworkStream Stream){
@@ -915,7 +901,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.3.9, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.3.10, (C) kornienko.ru August 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
