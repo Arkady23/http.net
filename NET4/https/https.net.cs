@@ -17,6 +17,7 @@ public class https{
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
                       H1="HTTP/1.1 ";
   public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
+  public const  int q9=2147483647;
   public static int port=8443, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
                     le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
@@ -193,6 +194,12 @@ public class https{
         }
       }
     }
+    return z;
+  }
+
+  public static int valInt(string x){
+    int z;
+    try{ z=int.Parse(x); }catch(Exception){ z=q9; }
     return z;
   }
 
@@ -836,8 +843,7 @@ class main{
   }
 
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, db9=80, p9=65535, q9=2147483647, s9=15383, post9=33554432,
-              less9=524288, log1=80;
+    int i, k, b9=131072, db9=80, p9=65535, s9=15383, post9=33554432, less9=524288, log1=80;
     bool l=true;
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
@@ -845,14 +851,14 @@ class main{
       case "-p":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
+          k=https.valInt(Args[i]);
           if(k > 0 && k <= p9) https.port=k;
         }
         break;
       case "-b":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
+          k=https.valInt(Args[i]);
           if(k<256){
             https.bu=256;
           }else{
@@ -863,49 +869,49 @@ class main{
       case "-q":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
-          https.qu=(k > 0 && k <= q9)? k : q9;
+          k=https.valInt(Args[i]);
+          https.qu=(k > 0 && k <= https.q9)? k : https.q9;
         }            
         break;
       case "-s":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
+          k=https.valInt(Args[i]);
           https.st=(k > 0 && k <= s9)? k : s9;
         }            
         break;
       case "-cp":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
+          k=https.valInt(Args[i]);
           if(k > 0 && k <= 65535) https.cp=k;
         }            
         break;
       case "-db":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
+          k=https.valInt(Args[i]);
           if(k >= 0 && k <= db9) https.db=k;
         }            
         break;
       case "-log":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
+          k=https.valInt(Args[i]);
           https.log9=(k < log1)? 0 : k;
         }            
         break;
       case "-post":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
+          k=https.valInt(Args[i]);
           https.post=(k > 0)? k : post9;
         }            
         break;
       case "-less":
         i++;
         if(i < Args.Length){
-          k=int.Parse(Args[i]);
+          k=https.valInt(Args[i]);
           https.le=(k > 0)? k : less9;
         }            
         break;
@@ -935,7 +941,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.1.10, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.1.11, (C) kornienko.ru August 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
