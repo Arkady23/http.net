@@ -24,6 +24,7 @@ public class httpd{
                        DirectorySessions="Sessions";
   public static Dictionary<string,byte[]> Files = new Dictionary<string,byte[]>();
   public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
+  public static Encoding UTF8 = Encoding.GetEncoding("UTF-8");
   public static Encoding Edos = Encoding.GetEncoding(28591);
   public static StreamWriter logSW = null;
   public static FileStream logFS = null;
@@ -753,7 +754,7 @@ value2
               GetBytes(head+cont1.Substring(i));
         }
       }catch(Exception e){
-        bytes1=httpd.Ewin.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nError in VFP: "+e.Message);
+        bytes1=httpd.UTF8.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
