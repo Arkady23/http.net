@@ -26,6 +26,7 @@ public class https{
                        DirectorySessions="Sessions", CerFile="a.kornienko.ru.pfx";
   public static Dictionary<string,byte[]> Files = new Dictionary<string,byte[]>();
   public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
+  public static Encoding UTF8 = Encoding.GetEncoding("UTF-8");
   public static Encoding Edos = Encoding.GetEncoding(28591);
   public static X509Certificate2 Cert = null;
   public static StreamWriter logSW = null;
@@ -531,7 +532,7 @@ class Session{
       if(filename.Length>0 || Content_Length>https.post){
         dirname=https.DirectorySessions+"/"+IP+"_"+Port;
         if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
-        filename = dirname+"/"+filename;
+        filename = dirname+"/"+HttpUtility.UrlDecode(filename);
       }
     }
 
@@ -688,7 +689,7 @@ value2
         if(filename.Length>0 || Content_Length>https.maxVFP){
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
           dirname=https.DirectorySessions+"/"+IP+"_"+Port;
-          filename = dirname+"/"+filename;
+          filename = dirname+"/"+HttpUtility.UrlDecode(filename);
         }
       }
 
@@ -781,7 +782,7 @@ value2
               GetBytes(head+cont1.Substring(i));
         }
       }catch(Exception e){
-        bytes1=https.Ewin.GetBytes(https.OK+head+https.CT_T+"\r\nError in VFP: "+e.Message);
+        bytes1=https.UTF8.GetBytes(https.OK+head+https.CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -941,7 +942,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.1.11, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.2.0, (C) kornienko.ru September 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
