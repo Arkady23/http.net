@@ -129,4 +129,4 @@ If there is an error in the prg file:
 2.3.9. August 2024. Caching of small files is now done asynchronously.  
 2.3.10. August 2024. Asynchrony of extracting files from the cache has been removed, and asynchrony of transferring files over a socket has been reduced due to errors that occur.  
 2.3.11. August 2024. Additional command line parameter control is set.  
-2.4. September 2024. Added file name decoding command to download files with names in national encodings.  
+2.4. September 2024. Added file name decoding command to download files with names in national encodings. If a critical VFP error occurs when trying to execute the prg script, then now the error message is converted to UTF-8 encoding.  
