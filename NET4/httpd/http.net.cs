@@ -503,7 +503,7 @@ class Session{
       if(filename.Length>0 || Content_Length>httpd.post){
         dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
         if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
-        filename = dirname+"/"+filename;
+        filename = dirname+"/"+HttpUtility.UrlDecode(filename);
       }
     }
 
@@ -660,7 +660,7 @@ value2
         if(filename.Length>0 || Content_Length>httpd.maxVFP){
           if(filename.Length==0) filename=DateTime.Now.ToString("HHmmssfff");
           dirname=httpd.DirectorySessions+"/"+IP+"_"+Port;
-          filename = dirname+"/"+filename;
+          filename = dirname+"/"+HttpUtility.UrlDecode(filename);
         }
       }
 
@@ -907,7 +907,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.3.11, (C) kornienko.ru August 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.4, (C) kornienko.ru September 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
