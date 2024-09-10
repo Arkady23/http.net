@@ -700,7 +700,7 @@ value2
       }
       https.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       https.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+https.beforStr9(ref res,"/")+"\"))");
-      https.vfp[j].SetVar("POST_FILENAME",filename.Length>0?https.Folder+filename:"");
+      https.vfp[j].SetVar("POST_FILENAME",filename.Length>0?https.Folder+"/"+filename:"");
       https.vfp[j].SetVar("SCRIPT_FILENAME",https.fullres(ref res));
       https.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       https.vfp[j].SetVar("HTTP_HEADERS",heads);
