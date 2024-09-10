@@ -672,7 +672,7 @@ value2
       }
       httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
       httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
-      httpd.vfp[j].SetVar("POST_FILENAME",filename.Length>0?httpd.Folder+filename:"");
+      httpd.vfp[j].SetVar("POST_FILENAME",filename.Length>0?httpd.Folder+"/"+filename:"");
       httpd.vfp[j].SetVar("SCRIPT_FILENAME",httpd.fullres(ref res));
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       httpd.vfp[j].SetVar("HTTP_HEADERS",heads);
