@@ -13,7 +13,7 @@ using System.Collections.Generic;
 public class httpd{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
-                      H1="HTTP/1.1 ";
+                      H1="HTTP/1.1 ",CLR="sys(2004)+'VFPclear.prg'";
   public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
   public const  int q9=2147483647;
   public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
@@ -32,8 +32,8 @@ public class httpd{
   public static TextWriter TW = null;
   public static TextWriter TE = null;
   public static dynamic[] vfp = null;
+  public static bool notexit=true, VFPclr=false;
   public static byte[] vfpb = null;
-  public static bool notexit=true;
   public static long DTi;
   Socket Server = null;
   Session[] Session = null;
@@ -53,6 +53,7 @@ public class httpd{
       vfpb[0]=1;
       vfp[0] = Activator.CreateInstance(vfpa);
       maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
+      VFPclr=vfp[0].Eval("file("+CLR+")");
     }
     ThreadPool.GetMinThreads(out i, out k);
     if(st>i) ThreadPool.SetMinThreads(st,st);
@@ -634,7 +635,8 @@ value2
   async Task send_prg(System.Net.Sockets.NetworkStream Stream){
     int j=-1, N=0;
     byte[] bytes1;
-    string prg=httpd.afterStr9(ref res,"/"), dirprg=System.IO.Path.GetDirectoryName(
+    string fullprg=httpd.fullres(ref res),prg=httpd.afterStr9(ref res,"/"),
+           dirprg=System.IO.Path.GetDirectoryName(
            System.Reflection.Assembly.GetEntryAssembly().Location),dirname="",
            filename="";
 
@@ -670,14 +672,13 @@ value2
       }catch(System.Runtime.InteropServices.COMException){
         httpd.vfp[j] = Activator.CreateInstance(httpd.vfpa);
       }
-      httpd.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
-      httpd.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+httpd.beforStr9(ref res,"/")+"\"))");
+      httpd.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
+      httpd.vfp[j].DoCmd("SET DEFA TO (\""+httpd.beforStr9(ref fullprg,"/")+"\")");
       httpd.vfp[j].SetVar("POST_FILENAME",filename.Length>0?httpd.Folder+"/"+filename:"");
-      httpd.vfp[j].SetVar("SCRIPT_FILENAME",httpd.fullres(ref res));
+      httpd.vfp[j].SetVar("SCRIPT_FILENAME",fullprg);
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       httpd.vfp[j].SetVar("HTTP_HEADERS",heads);
       httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
-      httpd.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
 
       if(Content_Length>0){
         Task ft = null;
@@ -758,13 +759,15 @@ value2
       }
       // Подготовим VFP к новым заданиям
       try{
-        httpd.vfp[j].DoCmd("on erro _box=_box");
-        httpd.vfp[j].DoCmd("clea even");
-        httpd.vfp[j].DoCmd("clea prog");
-        httpd.vfp[j].DoCmd("clea all");
-        httpd.vfp[j].DoCmd("clos data all");
-        httpd.vfp[j].DoCmd("clos all");
-        httpd.vfp[j].DoCmd("on shut");
+        if(httpd.VFPclr){
+          httpd.vfp[j].DoCmd("do ("+httpd.CLR+")");
+        }else{
+          httpd.vfp[j].DoCmd("clea even");
+          httpd.vfp[j].DoCmd("clea prog");
+          httpd.vfp[j].DoCmd("clea all");
+          httpd.vfp[j].DoCmd("clos data all");
+          httpd.vfp[j].DoCmd("clos all");
+        }
         httpd.vfpb[j]=1;
       }catch(Exception){
         httpd.vfpb[j]=0;
@@ -908,7 +911,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.4, (C) kornienko.ru September 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.4.1, (C) kornienko.ru September 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
