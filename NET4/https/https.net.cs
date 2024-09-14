@@ -15,7 +15,7 @@ using System.Security.Cryptography.X509Certificates;
 public class https{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
-                      H1="HTTP/1.1 ";
+                      H1="HTTP/1.1 ",CLR="sys(2004)+'VFPclear.prg'";
   public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
   public const  int q9=2147483647;
   public static int port=8443, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
@@ -36,7 +36,7 @@ public class https{
   public static TextWriter TE = null;
   public static dynamic[] vfp = null;
   public static byte[] vfpb = null;
-  public static bool notexit=true;
+  public static bool notexit=true, VFPclr=false;
   public static long DTi;
   Socket Server = null;
   Session[] Session = null;
@@ -70,6 +70,7 @@ public class https{
           vfpb[0]=1;
           vfp[0] = Activator.CreateInstance(vfpa);
           maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
+          VFPclr=vfp[0].Eval("file("+CLR+")");
         }
         ThreadPool.GetMinThreads(out i, out k);
         if(st>i) ThreadPool.SetMinThreads(st,st);
@@ -662,7 +663,8 @@ value2
   async Task send_prg(SslStream Stream){
     int j=-1, N=0;
     byte[] bytes1;
-    string prg=https.afterStr9(ref res,"/"), dirprg=System.IO.Path.GetDirectoryName(
+    string fullprg=https.fullres(ref res),prg=https.afterStr9(ref res,"/"),
+           dirprg=System.IO.Path.GetDirectoryName(
            System.Reflection.Assembly.GetEntryAssembly().Location),dirname="",
            filename="";
 
@@ -698,14 +700,13 @@ value2
       }catch(System.Runtime.InteropServices.COMException){
         https.vfp[j] = Activator.CreateInstance(https.vfpa);
       }
-      https.vfp[j].DoCmd("SET DEFA TO \""+dirprg+"\"");
-      https.vfp[j].DoCmd("SET DEFA TO (FULLP(\""+https.beforStr9(ref res,"/")+"\"))");
+      https.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
+      https.vfp[j].DoCmd("SET DEFA TO (\""+https.beforStr9(ref fullprg,"/")+"\")");
       https.vfp[j].SetVar("POST_FILENAME",filename.Length>0?https.Folder+"/"+filename:"");
-      https.vfp[j].SetVar("SCRIPT_FILENAME",https.fullres(ref res));
+      https.vfp[j].SetVar("SCRIPT_FILENAME",fullprg);
       https.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       https.vfp[j].SetVar("HTTP_HEADERS",heads);
       https.vfp[j].SetVar("REMOTE_ADDR",IP);
-      https.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
 
       if(Content_Length>0){
         Task ft = null;
@@ -786,13 +787,15 @@ value2
       }
       // Подготовим VFP к новым заданиям
       try{
-        https.vfp[j].DoCmd("on erro _box=_box");
-        https.vfp[j].DoCmd("clea even");
-        https.vfp[j].DoCmd("clea prog");
-        https.vfp[j].DoCmd("clea all");
-        https.vfp[j].DoCmd("clos data all");
-        https.vfp[j].DoCmd("clos all");
-        https.vfp[j].DoCmd("on shut");
+        if(https.VFPclr){
+          https.vfp[j].DoCmd("do ("+https.CLR+")");
+        }else{
+          https.vfp[j].DoCmd("clea even");
+          https.vfp[j].DoCmd("clea prog");
+          https.vfp[j].DoCmd("clea all");
+          https.vfp[j].DoCmd("clos data all");
+          https.vfp[j].DoCmd("clos all");
+        }
         https.vfpb[j]=1;
       }catch(Exception){
         https.vfpb[j]=0;
@@ -942,7 +945,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.2.0, (C) kornienko.ru September 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.2.1, (C) kornienko.ru September 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
