@@ -58,7 +58,7 @@ public class httpd{
     ThreadPool.GetMinThreads(out i, out k);
     if(st>i) ThreadPool.SetMinThreads(st,st);
     try{
-      Parallel.For(0,st,j => { Session[j] = new Session(Server); });
+      Parallel.For(0,st,j => { Session[j] = new Session(Server,j); });
       if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
     }catch(Exception){
       if(log9>0) log("\t"+"There were problems when creating threads. Try updating Windows.");
@@ -200,15 +200,15 @@ class Session{
   private byte[] bytes;
   private byte l, R, R1, R2;
 
-  public Session(Socket Server){
-    Accept(Server);
+  public Session(Socket Server, int jt){
+    Accept(Server,jt);
   }
 
-  public async void Accept(Socket Server){
-    while (httpd.notexit) await AcceptProc(await Server.AcceptAsync(), Server);
+  public async void Accept(Socket Server, int jt){
+    while (httpd.notexit) await AcceptProc(await Server.AcceptAsync(), Server, jt);
   }
 
-  public async Task AcceptProc(Socket Client, Socket Server){
+  public async Task AcceptProc(Socket Client, Socket Server, int jt){
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       string dt1=DateTime.UtcNow.ToString("R"), Content_T=httpd.CT_T;
@@ -218,7 +218,7 @@ class Session{
       k=Content_Length=0;
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
-      x1=IP+" "+Port+"\t";
+      x1=IP+" "+jt.ToString()+"\t";
       bytes = new Byte[i];
       cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
       while (i>0 && l>0){
@@ -911,7 +911,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.4.1, (C) kornienko.ru September 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.4.2, (C) kornienko.ru September 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
