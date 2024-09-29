@@ -221,8 +221,8 @@ class Session{
   private byte l, R, R1, R2;
 
   public Session(Socket Server){
-    jt = https.i.ToString();
     https.i++;
+    jt = https.i.ToString();
     Accept(Server);
   }
 
