@@ -88,7 +88,7 @@ public class https{
   public void StopServer(){
     notexit=false;
     if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0)
-                        try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){}
+                        try{vfp[i].Quit();}catch(System.Runtime.InteropServices.COMException){ }
     if(logFS!=null){
       // Восстановить вывод на консоль
       Console.SetError(TE);
@@ -228,73 +228,73 @@ class Session{
   }
 
   public async Task AcceptProc(Socket Client, Socket Server){
-    using(var Stream = new SslStream(new NetworkStream(Client,true),false)){
+    SslStream Stream = null;
+    try{
+      R=R1=R2=0;
+      Stream = new SslStream(new NetworkStream(Client,true),false);
+      Stream.AuthenticateAsServer(https.Cert,false,
+          System.Security.Authentication.SslProtocols.Tls12,false);
+    }catch(Exception e){
+      R=6;
+      https.log2(x1+e.Message);
+    }
+    if(R==0){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
       x1=IP+" "+Port+"\t";
-      R=R1=R2=0;
-      try{
-        Stream.AuthenticateAsServer(https.Cert,false,
-               System.Security.Authentication.SslProtocols.Tls12,false);
-      }catch(Exception e){
-        R=6;
-        https.log2(x1+e.Message);
-      }
-      if(R==0){
-        l=1;
-        i=https.bu;
-        k=Content_Length=0;
-        bytes = new Byte[i];
-        cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
-        while (i>0 && l>0){
-          if(k>0 && i>k){
-            cont1=https.Edos.GetString(bytes,k,i-k);
-            k=0;
-          }
-          try{
-            i = await Stream.ReadAsync(bytes, 0, bytes.Length);
-          }catch(IOException){
-            i = -1;
-          }
-          if(i>0){
-            l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
-                  ref Content_Disposition, ref Content_Length, ref heads);
-          }else{
-            R2=1;
-          }
+      l=1;
+      i=https.bu;
+      k=Content_Length=0;
+      bytes = new Byte[i];
+      cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
+      while (i>0 && l>0){
+        if(k>0 && i>k){
+          cont1=https.Edos.GetString(bytes,k,i-k);
+          k=0;
         }
+        try{
+          i = await Stream.ReadAsync(bytes, 0, bytes.Length);
+        }catch(IOException){
+          i = -1;
+        }
+        if(i>0){
+          l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
+                ref Content_Disposition, ref Content_Length, ref heads);
+        }else{
+          R2=1;
+        }
+      }
 
-        if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
-                                  ref h1, ref Content_T);
-        if(R>0){
-          https.log2(x1+res);
-          head="Date: "+dt1+"\r\n"+h1+Content_T;
-          if(R>1){
-            if(File.Exists(res)){
-              if(R==2){
-                await send_wsf(Stream);
-              }else{
-                await send_prg(Stream);
-              }
+      if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
+                                ref h1, ref Content_T);
+      if(R>0){
+        https.log2(x1+res);
+        head="Date: "+dt1+"\r\n"+h1+Content_T;
+        if(R>1){
+          if(File.Exists(res)){
+            if(R==2){
+              await send_wsf(Stream);
             }else{
-              R=1;
+              await send_prg(Stream);
             }
-          }
-          if(R==1){
-            if(!gzExists(ref res, ref head)){
-              if(!File.Exists(res)){
-                res=https.DocumentRoot+https.DI;
-                if(!gzExists(ref res, ref head)) R=0;
-              }
-            }
-            if(R==1) await type(Stream);
+          }else{
+            R=1;
           }
         }
+        if(R==1){
+          if(!gzExists(ref res, ref head)){
+            if(!File.Exists(res)){
+              res=https.DocumentRoot+https.DI;
+              if(!gzExists(ref res, ref head)) R=0;
+            }
+          }
+          if(R==1) await type(Stream);
+        }
       }
-      Stream.Close();
     }
+    if(Stream != null) Stream.Close();
   }
 
   static void putCT(ref string c, string x){
@@ -478,7 +478,7 @@ class Session{
         found = 1;
       }else{
         found = 7;
-        try{ https.Files.Add(key, new byte[NN]); }catch (ArgumentException){}
+        try{ https.Files.Add(key, new byte[NN]); }catch (ArgumentException){ }
       }
     }
     if(found == 1){
@@ -631,7 +631,7 @@ value2
       }
       if (ft != null) await ft;
       if (file != null && file.CanRead) file.Close();
-      if (swt != null) try{ await swt; }catch(IOException){}
+      if (swt != null) try{ await swt; }catch(IOException){ }
       sw.Close();
     }
 
@@ -653,7 +653,7 @@ value2
 
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(IOException){}
+    }catch(IOException){ }
 
     Proc.WaitForExit();
     // Освободить ресурсы
@@ -807,7 +807,7 @@ value2
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(IOException){}
+    }catch(IOException){ }
   }
 
 }
@@ -945,7 +945,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.2.1, (C) kornienko.ru September 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.2.2, (C) kornienko.ru September 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
