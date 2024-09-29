@@ -228,7 +228,6 @@ class Session{
   }
 
   public async Task AcceptProc(Socket Client, Socket Server){
-    string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
     IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
     IP=Point.Address.ToString();
     Port=Point.Port.ToString();
@@ -248,6 +247,7 @@ class Session{
       i=https.bu;
       k=Content_Length=0;
       bytes = new Byte[i];
+      string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
       cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
       while (i>0 && l>0){
         if(k>0 && i>k){
