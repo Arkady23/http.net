@@ -228,22 +228,22 @@ class Session{
   }
 
   public async Task AcceptProc(Socket Client, Socket Server){
+    string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
+    IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
+    IP=Point.Address.ToString();
+    Port=Point.Port.ToString();
+    x1=IP+" "+Port+"\t";
     SslStream Stream = null;
     try{
-      R=R1=R2=0;
       Stream = new SslStream(new NetworkStream(Client,true),false);
       Stream.AuthenticateAsServer(https.Cert,false,
           System.Security.Authentication.SslProtocols.Tls12,false);
+      R=R1=R2=0;
     }catch(Exception e){
-      R=6;
       https.log2(x1+e.Message);
+      R=6;
     }
     if(R==0){
-      IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
-      IP=Point.Address.ToString();
-      Port=Point.Port.ToString();
-      x1=IP+" "+Port+"\t";
       l=1;
       i=https.bu;
       k=Content_Length=0;
