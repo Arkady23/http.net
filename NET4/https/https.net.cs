@@ -74,8 +74,9 @@ public class https{
         }
         ThreadPool.GetMinThreads(out i, out k);
         if(st>i) ThreadPool.SetMinThreads(st,st);
+        i=0;    // Задание начального индекса для создания переменной jt в Session
         try{
-          Parallel.For(0,st,j => { Session[j] = new Session(Server,j); });
+          Parallel.For(0,st,j => { Session[j] = new Session(Server); });
           if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
         }catch(Exception){
           if(log9>0) log("\t"+"There were problems when creating threads. Try updating Windows.");
@@ -215,23 +216,25 @@ public class https{
 class Session{
   private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, heads, Host, Content_Disposition,
-                 QUERY_STRING, IP, Port, x1;
+                 QUERY_STRING, IP, jt, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
 
-  public Session(Socket Server, int jt){
-    Accept(Server,jt);
+  public Session(Socket Server){
+    jt = https.i.ToString();
+    https.i++;
+    Accept(Server);
   }
 
-  public async void Accept(Socket Server, int jt){
-    while (https.notexit) await AcceptProc(await Server.AcceptAsync(), Server, jt);
+  public async void Accept(Socket Server){
+    while (https.notexit) await AcceptProc(await Server.AcceptAsync(), Server);
   }
 
-  public async Task AcceptProc(Socket Client, Socket Server, int jt){
+  public async Task AcceptProc(Socket Client, Socket Server){
     IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
     IP=Point.Address.ToString();
     Port=Point.Port.ToString();
-    x1=IP+" "+jt.ToString()+"\t";
+    x1=IP+" "+jt+"\t";
     SslStream Stream = null;
     try{
       Stream = new SslStream(new NetworkStream(Client,true),false);
