@@ -202,8 +202,8 @@ class Session{
   private byte l, R, R1, R2;
 
   public Session(Socket Server){
-    jt = httpd.i.ToString();
     httpd.i++;
+    jt = httpd.i.ToString();
     Accept(Server);
   }
 
