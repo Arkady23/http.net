@@ -57,8 +57,9 @@ public class httpd{
     }
     ThreadPool.GetMinThreads(out i, out k);
     if(st>i) ThreadPool.SetMinThreads(st,st);
+    i=0;    // Задание начального индекса для создания переменной jt в Session
     try{
-      Parallel.For(0,st,j => { Session[j] = new Session(Server,j); });
+      Parallel.For(0,st,j => { Session[j] = new Session(Server); });
       if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
     }catch(Exception){
       if(log9>0) log("\t"+"There were problems when creating threads. Try updating Windows.");
@@ -196,19 +197,21 @@ public class httpd{
 class Session{
   private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, heads, Host, Content_Disposition,
-                 QUERY_STRING, IP, Port, x1;
+                 QUERY_STRING, IP, jt, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
 
-  public Session(Socket Server, int jt){
-    Accept(Server,jt);
+  public Session(Socket Server){
+    jt = httpd.i.ToString();
+    httpd.i++;
+    Accept(Server);
   }
 
-  public async void Accept(Socket Server, int jt){
-    while (httpd.notexit) await AcceptProc(await Server.AcceptAsync(), Server, jt);
+  public async void Accept(Socket Server){
+    while (httpd.notexit) await AcceptProc(await Server.AcceptAsync(), Server);
   }
 
-  public async Task AcceptProc(Socket Client, Socket Server, int jt){
+  public async Task AcceptProc(Socket Client, Socket Server){
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       string dt1=DateTime.UtcNow.ToString("R"), Content_T=httpd.CT_T;
@@ -218,7 +221,7 @@ class Session{
       k=Content_Length=0;
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
-      x1=IP+" "+jt.ToString()+"\t";
+      x1=IP+" "+jt+"\t";
       bytes = new Byte[i];
       cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
       while (i>0 && l>0){
