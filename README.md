@@ -89,7 +89,7 @@ The visual result of the prg script:
 If there is an error in the prg file:
 ![If there is an error in the prg file](screenShots/if-error-in-prg-file.png)
 ### История версий
-В папке httpd и https всегда можно скачать последнюю рабочую версию http.net.exe и https.net.exe.  
+В папках httpd и https всегда можно скачать последние рабочие версии http.net.exe и https.net.exe.  
   
 1.0. Январь 2023. Первая версия.  
 1.1. Февраль 2023. По рекомендации MS Corp. убраны массивы с динамически изменяющимися размерами в целях уменьшения нагрузки на системный сборщик мусора в ОП. Добавлено кэширование небольших файлов с целью увеличения скорости работы сервера.  
