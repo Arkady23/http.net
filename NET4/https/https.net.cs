@@ -223,6 +223,7 @@ class Session{
   public Session(Socket Server){
     https.i++;
     jt = https.i.ToString();
+    bytes = new Byte[https.bu];
     Accept(Server);
   }
 
@@ -249,7 +250,6 @@ class Session{
       k=Content_Length=0;
       x1=IP+" "+jt+"\t";
       i=https.bu;
-      bytes = new Byte[i];
       l=1;
       while (i>0 && l>0){
         if(k>0 && i>k){
