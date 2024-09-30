@@ -231,27 +231,26 @@ class Session{
   }
 
   public async Task AcceptProc(Socket Client, Socket Server){
-    IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-    IP=Point.Address.ToString();
-    Port=Point.Port.ToString();
-    x1=IP+" "+jt+"\t";
     SslStream Stream = null;
     try{
       Stream = new SslStream(new NetworkStream(Client,true),false);
       Stream.AuthenticateAsServer(https.Cert,false,
           System.Security.Authentication.SslProtocols.Tls12,false);
       R=R1=R2=0;
-    }catch(Exception e){
-      https.log2(x1+e.Message);
-      R=6;
+    }catch(Exception){
+      R=6;    // Ошибки авторизации хакеров проигнорировать
     }
     if(R==0){
-      l=1;
-      i=https.bu;
-      k=Content_Length=0;
-      bytes = new Byte[i];
       string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
       cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
+      IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
+      IP=Point.Address.ToString();
+      Port=Point.Port.ToString();
+      k=Content_Length=0;
+      x1=IP+" "+jt+"\t";
+      i=https.bu;
+      bytes = new Byte[i];
+      l=1;
       while (i>0 && l>0){
         if(k>0 && i>k){
           cont1=https.Edos.GetString(bytes,k,i-k);
