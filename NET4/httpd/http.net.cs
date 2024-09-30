@@ -204,6 +204,7 @@ class Session{
   public Session(Socket Server){
     httpd.i++;
     jt = httpd.i.ToString();
+    bytes = new Byte[httpd.bu];
     Accept(Server);
   }
 
@@ -215,15 +216,14 @@ class Session{
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       string dt1=DateTime.UtcNow.ToString("R"), Content_T=httpd.CT_T;
-      l=1;
-      R=R1=R2=0;
-      i=httpd.bu;
-      k=Content_Length=0;
+      cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
+      k=Content_Length=0;
       x1=IP+" "+jt+"\t";
-      bytes = new Byte[i];
-      cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
+      i=httpd.bu;
+      R=R1=R2=0;
+      l=1;
       while (i>0 && l>0){
         if(k>0 && i>k){
           cont1=httpd.Edos.GetString(bytes,k,i-k);
