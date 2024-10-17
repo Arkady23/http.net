@@ -9,7 +9,7 @@ The number of threads should not be set immediately to the maximum possible. If 
 Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
 ```
 PS D:\work\httpd> ./http.net /?
-Multithreaded http.net server version 2.4.2, (C) kornienko.ru September 2024.
+Multithreaded http.net server version 2.5.0, (C) kornienko.ru October 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -132,3 +132,4 @@ If there is an error in the prg file:
 2.4. September 2024. Added file name decoding command to download files with names in national Windows encodings. If a critical VFP error occurs when trying to execute the prg script, then now the error message is converted to UTF-8 encoding.  
 2.4.1. September 2024. Added the ability to replace the standard set of VFP commands to clean up trash after the script is finished before executing the next script written in prg. The availability of the new set of commands is checked in the sys(2004)+'VFPclear.prg' file. If no such prg is found, then the standard set of commands is executed: clean even, clear prog, clear all, close data all and close all.  
 2.4.2. September 2024. The request log contains the number of the task in which it is being processed.  
+2.5.0. October 2024. The European encoding has been replaced with UTF-8. After switching the log to another file, all entries in this log are deleted for easy readability.  
