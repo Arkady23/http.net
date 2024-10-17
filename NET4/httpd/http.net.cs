@@ -25,7 +25,6 @@ public class httpd{
   public static Dictionary<string,byte[]> Files = new Dictionary<string,byte[]>();
   public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
   public static Encoding UTF8 = Encoding.GetEncoding("UTF-8");
-  public static Encoding Edos = Encoding.GetEncoding(28591);
   public static StreamWriter logSW = null;
   public static FileStream logFS = null;
   public static Encoding Ewin = null;
@@ -50,10 +49,16 @@ public class httpd{
     Server.Listen(qu);
     if(log9>0) log("\tThe http-server is running...");
     if(vfpa!=null){
-      vfpb[0]=1;
-      vfp[0] = Activator.CreateInstance(vfpa);
-      maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
-      VFPclr=vfp[0].Eval("file("+CLR+")");
+      try{
+        vfp[0] = Activator.CreateInstance(vfpa);
+      }catch(Exception){
+        vfpa = null;
+      }
+      if(vfpa!=null){
+        vfpb[0]=1;
+        maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
+        VFPclr=vfp[0].Eval("file("+CLR+")");
+      }
     }
     ThreadPool.GetMinThreads(out i, out k);
     if(st>i) ThreadPool.SetMinThreads(st,st);
@@ -95,7 +100,7 @@ public class httpd{
     if(!(logFS!=null)){
       // Отправка вывода на консоль в файл:
       logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
-      logFS = new FileStream(logZ,FileMode.OpenOrCreate,FileAccess.Write,FileShare.ReadWrite);
+      logFS = new FileStream(logZ,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
       TW = Console.Out;
       TE = Console.Error;
       logSW = new StreamWriter(logFS);
@@ -226,12 +231,12 @@ class Session{
       l=1;
       while (i>0 && l>0){
         if(k>0 && i>k){
-          cont1=httpd.Edos.GetString(bytes,k,i-k);
+          cont1=httpd.UTF8.GetString(bytes,k,i-k);
           k=0;
         }
         try{
           i = await Stream.ReadAsync(bytes, 0, bytes.Length);
-        }catch(IOException){
+        }catch(Exception){
           i = -1;
         }
         if(i>0){
@@ -287,7 +292,7 @@ class Session{
   }
 
   static string zinc(ref string z, ref byte[] bytes, ref int k, int i){
-    return z+httpd.Edos.GetString(bytes,k,i);
+    return z+httpd.UTF8.GetString(bytes,k,i);
   }
 
   static string line1(ref byte[] bytes, ref string cont1, ref int k, ref byte b){
@@ -458,14 +463,14 @@ class Session{
     }
     if(found == 1){
       head+=NN+"\r\n\r\n";
-      i=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
+      i=httpd.UTF8.GetBytes(head,0,head.Length,bytes,0);
       await Stream.WriteAsync(bytes,0,i);
       await Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
       await Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
         head+=ts.Length+"\r\n\r\n";
-        k=httpd.Edos.GetBytes(head,0,head.Length,bytes,0);
+        k=httpd.UTF8.GetBytes(head,0,head.Length,bytes,0);
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
@@ -579,7 +584,7 @@ value2
         }else{
           // Всё записывать в поток
           if(i>0){
-            cont1+=httpd.Edos.GetString(bytes,k,i);
+            cont1+=httpd.UTF8.GetString(bytes,k,i);
           }else{
             R2=1;
           }
@@ -717,7 +722,7 @@ value2
           }else{
             // Всё записывать в поток
             if(i>0){
-              cont1+=httpd.Edos.GetString(bytes,k,i);
+              cont1+=httpd.UTF8.GetString(bytes,k,i);
             }else{
               R2=1;
             }
@@ -914,7 +919,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.4.2, (C) kornienko.ru September 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.5.0, (C) kornienko.ru October 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
