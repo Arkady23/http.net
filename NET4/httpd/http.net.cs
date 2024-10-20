@@ -13,24 +13,23 @@ using System.Collections.Generic;
 public class httpd{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
-                      H1="HTTP/1.1 ",CLR="sys(2004)+'VFPclear.prg'";
+                      H1="HTTP/1.1 ",UTF="UTF-8",CLR="sys(2004)+'VFPclear.prg'";
   public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
   public const  int q9=2147483647;
   public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
-                    le=524288, cp=Encoding.GetEncoding(0).CodePage, logi=0, i, k, maxVFP;
+                    le=524288, logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
                        DirectorySessions="Sessions";
   public static Dictionary<string,byte[]> Files = new Dictionary<string,byte[]>();
   public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
-  public static Encoding UTF8 = Encoding.GetEncoding("UTF-8");
   public static StreamWriter logSW = null;
   public static FileStream logFS = null;
-  public static Encoding Ewin = null;
   public static TextWriter TW = null;
   public static TextWriter TE = null;
   public static dynamic[] vfp = null;
+  public static Encoding vfpw = null;
   public static bool notexit=true, VFPclr=false;
   public static byte[] vfpb = null;
   public static long DTi;
@@ -42,7 +41,6 @@ public class httpd{
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
     Session = new Session[st];
     IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
-    Ewin = Encoding.GetEncoding(cp);
     vfp = new dynamic[db];
     vfpb = new byte[db];
     Server.Bind(ep);
@@ -57,6 +55,7 @@ public class httpd{
       if(vfpa!=null){
         vfpb[0]=1;
         maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
+        vfpw=Encoding.GetEncoding(vfp[0].Eval("CPCURRENT()"));
         VFPclr=vfp[0].Eval("file("+CLR+")");
       }
     }
@@ -118,7 +117,7 @@ public class httpd{
       }
     }catch(ObjectDisposedException){
       log9=0;
-    }catch(IOException){
+    }catch(Exception){
       Thread.Sleep(23); log2(x+"");
     }
   }
@@ -147,7 +146,7 @@ public class httpd{
 
   public static string afterStr1(ref string x, string Str){
     if(Str.Length>0){
-      int k=x.IndexOf(Str);
+      int k=x.IndexOf(Str,StringComparison.OrdinalIgnoreCase);
       return k<0?"":x.Substring(k+Str.Length);
     }else{
       return x;
@@ -174,6 +173,7 @@ public class httpd{
     string z="";
     if(x.Length>0){
       z=afterStr1(ref x," "+Str+"=");
+      if(z.Length==0) z=afterStr1(ref x,";"+Str+"=");
       if(z.Length>0){
         if(z.Substring(0,1)=="\""){
           z=z.Substring(1);
@@ -201,10 +201,11 @@ public class httpd{
 
 class Session{
   private int i,k,Content_Length;
-  private string cont1, h1, reso, res, head, heads, Host, Content_Disposition,
-                 QUERY_STRING, IP, jt, Port, x1;
+  private string cont1, h1, reso, res, head, heads, Host, Content_Type,
+                 Content_Disposition, QUERY_STRING, IP, jt, Port, x1;
   private byte[] bytes;
   private byte l, R, R1, R2;
+  private Encoding UTF8;
 
   public Session(Socket Server){
     httpd.i++;
@@ -221,7 +222,8 @@ class Session{
     using(var Stream = new NetworkStream(Client,true)){
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       string dt1=DateTime.UtcNow.ToString("R"), Content_T=httpd.CT_T;
-      cont1=heads=head=h1=reso=Host=Content_Disposition=QUERY_STRING="";
+      cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
+      UTF8 = Encoding.GetEncoding(httpd.UTF);
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
       k=Content_Length=0;
@@ -231,7 +233,7 @@ class Session{
       l=1;
       while (i>0 && l>0){
         if(k>0 && i>k){
-          cont1=httpd.UTF8.GetString(bytes,k,i-k);
+          cont1=UTF8.GetString(bytes,k,i-k);
           k=0;
         }
         try{
@@ -240,8 +242,8 @@ class Session{
           i = -1;
         }
         if(i>0){
-          l = getHeaders(ref bytes, ref cont1, ref k, ref reso, ref Host,
-                ref Content_Disposition, ref Content_Length, ref heads);
+          l = getHeaders(UTF8, ref bytes, ref cont1, ref k, ref reso, ref Host,
+              ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
         }else{
           R2=1;
         }
@@ -254,6 +256,10 @@ class Session{
         head="Date: "+dt1+"\r\n"+h1+Content_T;
         if(R>1){
           if(File.Exists(res)){
+            x1=httpd.valStr(ref Content_Type,"charset");
+            if(x1.Length>0 && !string.Equals(x1,httpd.UTF,StringComparison.OrdinalIgnoreCase)){
+              try{ UTF8 = Encoding.GetEncoding(x1); }catch(Exception){ }
+            }
             if(R==2){
               await send_wsf(Stream);
             }else{
@@ -291,20 +297,17 @@ class Session{
     return L;
   }
 
-  static string zinc(ref string z, ref byte[] bytes, ref int k, int i){
-    return z+httpd.UTF8.GetString(bytes,k,i);
-  }
-
-  static string line1(ref byte[] bytes, ref string cont1, ref int k, ref byte b){
+  static string line1(Encoding UTF8, ref byte[] bytes, ref string cont1, ref int k,
+                      ref byte b){
     int i;
     string z=cont1;
     cont1="";
     i=httpd.find10(ref bytes,k);
     if(i<bytes.Length){
       if(i>0 && bytes[i-1]==13){
-        z=zinc(ref z, ref bytes, ref k, i-k-1);
+        z+=UTF8.GetString(bytes,k,i-k-1);
       }else{
-        z=zinc(ref z, ref bytes, ref k, i-k);
+        z+=UTF8.GetString(bytes,k,i-k);
       }
       k=i+1;
       b=0;
@@ -314,15 +317,15 @@ class Session{
     return z;
   }
 
-  static byte getHeaders(ref byte[] bytes, ref string cont1, ref int k, ref string reso,
-                ref string Host, ref string Content_Disposition, ref int Content_Length,
-                ref string heads){
+  static byte getHeaders(Encoding UTF8, ref byte[] bytes, ref string cont1, ref int k,
+                ref string reso, ref string Host, ref string Content_Type,
+                ref string Content_Disposition, ref int Content_Length, ref string heads){
     byte b=0;
-    string lin=line1(ref bytes, ref cont1, ref k, ref b),n,h;
+    string lin=line1(UTF8, ref bytes, ref cont1, ref k, ref b),n,h;
 
     while (lin.Length>0){
 // Console.WriteLine("lin=|"+lin+"|");
-// httpd.log(lin);
+// httpd.log2(lin);
       h=httpd.afterStr1(ref lin,":");
       h=httpd.ltri(ref h);
       if(h.Length>0){
@@ -330,6 +333,9 @@ class Session{
         switch(n){
         case "Host":
           Host=h;
+          break;
+        case httpd.CT:
+          Content_Type=h;
           break;
         case httpd.CD:
           Content_Disposition=h;
@@ -344,7 +350,7 @@ class Session{
         h=httpd.beforStr9(ref h," ");
         reso=httpd.ltri(ref h);
       }
-      lin=line1(ref bytes, ref cont1, ref k, ref b);
+      lin=line1(UTF8, ref bytes, ref cont1, ref k, ref b);
     }
     return b;
   }
@@ -463,14 +469,14 @@ class Session{
     }
     if(found == 1){
       head+=NN+"\r\n\r\n";
-      i=httpd.UTF8.GetBytes(head,0,head.Length,bytes,0);
+      i=UTF8.GetBytes(head,0,head.Length,bytes,0);
       await Stream.WriteAsync(bytes,0,i);
       await Stream.WriteAsync(httpd.Files[key],0,httpd.Files[key].Length);
       await Stream.WriteAsync(bytes,i-2,2);
     }else{
       using (FileStream ts = File.OpenRead(res)){
         head+=ts.Length+"\r\n\r\n";
-        k=httpd.UTF8.GetBytes(head,0,head.Length,bytes,0);
+        k=UTF8.GetBytes(head,0,head.Length,bytes,0);
         j=bytes.Length-k;
         while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
           if(found > 0) {
@@ -541,7 +547,7 @@ class Session{
         k=0;
         try{
           i = await Stream.ReadAsync(bytes,k,bytes.Length);
-        }catch(IOException){
+        }catch(Exception){
           N=Content_Length;
         }
       }
@@ -584,7 +590,7 @@ value2
         }else{
           // Всё записывать в поток
           if(i>0){
-            cont1+=httpd.UTF8.GetString(bytes,k,i);
+            cont1+=UTF8.GetString(bytes,k,i);
           }else{
             R2=1;
           }
@@ -601,7 +607,7 @@ value2
             if (ft != null) await ft;
             try{
               i = await Stream.ReadAsync(bytes,0,bytes.Length);
-            }catch(IOException){
+            }catch(Exception){
               N=Content_Length;
             }
           }else{
@@ -611,13 +617,13 @@ value2
       }
       if (ft != null) await ft;
       if (file != null && file.CanRead) file.Close();
-      if (swt != null) try{ await swt; }catch(IOException){}
+      if (swt != null) try{ await swt; }catch(Exception){}
       sw.Close();
     }
 
     // Вывод полученных данных wsf-скрипта
     if(R1==0){
-      bytes1=httpd.Ewin.GetBytes(httpd.OK+head+Proc.StandardOutput.ReadToEnd());
+      bytes1=UTF8.GetBytes(httpd.OK+head+Proc.StandardOutput.ReadToEnd());
     }else{
       cont1=Proc.StandardOutput.ReadToEnd();
       R1=(byte)cont1[0];
@@ -628,12 +634,12 @@ value2
         i=cont1.IndexOf("\n")+1;
         head=httpd.H1+cont1.Substring(0,i)+head;
       }
-      bytes1=httpd.Ewin.GetBytes(head+cont1.Substring(i));
+      bytes1=UTF8.GetBytes(head+cont1.Substring(i));
     }
 
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(IOException){}
+    }catch(Exception){}
 
     Proc.WaitForExit();
     // Освободить ресурсы
@@ -662,7 +668,7 @@ value2
     }
 
     if(j<0){
-      bytes1=httpd.Ewin.GetBytes(httpd.OK+head+httpd.CT_T+
+      bytes1=UTF8.GetBytes(httpd.OK+head+httpd.CT_T+
              "\r\nMS VFP is missing in the Windows registry");
     }else if(j<httpd.db){
       if(Content_Length>0){
@@ -698,7 +704,7 @@ value2
           k=0;
           try{
             i = await Stream.ReadAsync(bytes,k,bytes.Length);
-          }catch(IOException){
+          }catch(Exception){
             N=Content_Length;
           }
         }
@@ -722,7 +728,7 @@ value2
           }else{
             // Всё записывать в поток
             if(i>0){
-              cont1+=httpd.UTF8.GetString(bytes,k,i);
+              cont1+=UTF8.GetString(bytes,k,i);
             }else{
               R2=1;
             }
@@ -733,7 +739,7 @@ value2
               if (ft != null) await ft;
               try{
                 i = await Stream.ReadAsync(bytes,0,bytes.Length);
-              }catch(IOException){
+              }catch(Exception){
                 N=Content_Length;
               }
             }else{
@@ -747,8 +753,8 @@ value2
       httpd.vfp[j].SetVar("STD_INPUT",cont1);
       try{
         if(R1==0){
-          bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
-              GetBytes(httpd.OK+head+httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()"));
+          bytes1=httpd.vfpw.GetBytes(httpd.OK+head+httpd.vfp[j].
+                   Eval(httpd.beforStr9(ref prg,".prg")+"()"));
         }else{
           cont1=httpd.vfp[j].Eval(httpd.beforStr9(ref prg,".prg")+"()");
           R1=(byte)cont1[0];
@@ -759,11 +765,10 @@ value2
             i=cont1.IndexOf("\n")+1;
             head=httpd.H1+cont1.Substring(0,i)+head;
           }
-          bytes1=Encoding.GetEncoding(httpd.vfp[j].Eval("CPCURRENT()")).
-              GetBytes(head+cont1.Substring(i));
+          bytes1=httpd.vfpw.GetBytes(head+cont1.Substring(i));
         }
       }catch(Exception e){
-        bytes1=httpd.UTF8.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nError in VFP: "+e.Message);
+        bytes1=UTF8.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nError in VFP: "+e.Message);
       }
       // Подготовим VFP к новым заданиям
       try{
@@ -782,12 +787,12 @@ value2
       }
 
     }else{
-      bytes1=httpd.Ewin.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nAll "+httpd.db.ToString()+
+      bytes1=UTF8.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nAll "+httpd.db.ToString()+
              " VFP processes are busy");
     }
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(IOException){}
+    }catch(Exception){}
   }
 
 }
@@ -862,13 +867,6 @@ class main{
           httpd.st=(k > 0 && k <= s9)? k : s9;
         }            
         break;
-      case "-cp":
-        i++;
-        if(i < Args.Length){
-          k=httpd.valInt(Args[i]);
-          if(k > 0 && k <= 65535) httpd.cp=k;
-        }            
-        break;
       case "-db":
         i++;
         if(i < Args.Length){
@@ -919,7 +917,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.5.0, (C) kornienko.ru October 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.5.1, (C) kornienko.ru October 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -943,7 +941,6 @@ Parameters:                                                                  Def
              of simultaneous requests specified by the -s parameter is
              exceeded. If the amount of requests processed and pending in the
              queue is exceeded, a denial of service is sent to the client.
-     -cp     Code page number used for text transfer.                            "+httpd.cp.ToString()+@"
      -db     Maximum number of dynamically running MS VFP DBMS instances.        "+httpd.db.ToString()+@"
              Extending scripts to run VFP - prg. Pprocesses are started as
              needed by simultaneous client requests to the set value.
