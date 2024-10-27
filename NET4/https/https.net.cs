@@ -19,12 +19,11 @@ public class https{
   public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
   public const  int q9=2147483647;
   public static int port=8443, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
-                    le=524288, logi=0, i, k, maxVFP;
+                    logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="https.net.x.log", logY="https.net.y.log", logZ="",
                        DirectorySessions="Sessions", CerFile="a.kornienko.ru.pfx";
-  public static Dictionary<string,byte[]> Files = new Dictionary<string,byte[]>();
   public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
   public static X509Certificate2 Cert = null;
   public static StreamWriter logSW = null;
@@ -481,54 +480,32 @@ class Session{
 
   async Task type(SslStream Stream){
     // Отправка файла
-    long NN = new System.IO.FileInfo(res).Length;
-    string key = res+File.GetLastWriteTime(res).ToString("yyyyMMddHHmmssfff");
-
-    byte found;
-    int i,j,k,m=0;
+    int i,j,k;
     head=https.OK+head+https.CL+": ";
-    if(NN > https.le){
-      found=0;
-    }else{
-      found = 7;
-      try{ https.Files.Add(key, new byte[NN]); }catch(Exception){ found = 1; }
-    }
-    if(found == 1){
-      head+=NN+"\r\n\r\n";
-      i=UTF.GetBytes(head,0,head.Length,bytes,0);
-      await Stream.WriteAsync(bytes,0,i);
-      await Stream.WriteAsync(https.Files[key],0,https.Files[key].Length);
-      await Stream.WriteAsync(bytes,i-2,2);
-    }else{
-      using (FileStream ts = File.OpenRead(res)){
-        head+=ts.Length+"\r\n\r\n";
-        k=UTF.GetBytes(head,0,head.Length,bytes,0);
-        j=bytes.Length-k;
-        while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
-          if(found > 0) {
-            Array.Copy(bytes,k,https.Files[key],m,i);
-            m+=i;
-          }
-          if(k>0){
-            i+=k;
-            j=bytes.Length;
-            k=0;
-          }
-          if(ts.Length==ts.Position){
-            // Добавляем в конец перенос строки
-            if(i+2>=bytes.Length){
-              await Stream.WriteAsync(bytes,0,i);
-              i=0;
-            }
-            bytes[i]=13;
-            i++;
-            bytes[i]=10;
-            i++;
-          }
-          await Stream.WriteAsync(bytes,0,i);
+    using (FileStream ts = File.OpenRead(res)){
+      head+=ts.Length+"\r\n\r\n";
+      k=UTF.GetBytes(head,0,head.Length,bytes,0);
+      j=bytes.Length-k;
+      while ((i = await ts.ReadAsync(bytes,k,j)) > 0){
+        if(k>0){
+          i+=k;
+          j=bytes.Length;
+          k=0;
         }
-        ts.Close();
+        if(ts.Length==ts.Position){
+          // Добавляем в конец перенос строки
+          if(i+2>=bytes.Length){
+            await Stream.WriteAsync(bytes,0,i);
+            i=0;
+          }
+          bytes[i]=13;
+          i++;
+          bytes[i]=10;
+          i++;
+        }
+        await Stream.WriteAsync(bytes,0,i);
       }
+      ts.Close();
     }
   }
 
@@ -858,7 +835,7 @@ class main{
   }
 
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, db9=80, p9=65535, s9=15383, post9=33554432, less9=524288, log1=80;
+    int i, k, b9=131072, db9=80, p9=65535, s9=15383, post9=33554432, log1=80;
     bool l=true;
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
@@ -916,13 +893,6 @@ class main{
           https.post=(k > 0)? k : post9;
         }            
         break;
-      case "-less":
-        i++;
-        if(i < Args.Length){
-          k=https.valInt(Args[i]);
-          https.le=(k > 0)? k : less9;
-        }            
-        break;
       case "-d":
         i++;
         if(i < Args.Length) https.DocumentRoot=
@@ -949,7 +919,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.3.3, (C) kornienko.ru October 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.3.4, (C) kornienko.ru October 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -983,8 +953,6 @@ Parameters:                                                                  Def
      -log    Size of the query log in rows. The log consists of two              "+https.log9.ToString()+@"
              interleaved versions http.net.x.log and http.net.y.log. If the
              size is set to less than "+log1.ToString()+@", then the log is not kept.
-     -less   Maximum size of small files that should be cached. All such         "+https.le.ToString()+@"
-             files will be stored in RAM to improve performance.
      -post   Maximum size of the accepted request to transfer to the script      "+https.post.ToString()+@"
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
