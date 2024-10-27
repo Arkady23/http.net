@@ -276,7 +276,6 @@ class Session{
               if(!gzExists(ref res, ref head)){
                 if(!File.Exists(res)) R=0;
               }
-
             }
           }
           if(R==1) await type(Stream);
@@ -463,12 +462,8 @@ class Session{
     if(NN > httpd.le){
       found=0;
     }else{
-      if(httpd.Files.ContainsKey(key)){
-        found = 1;
-      }else{
-        found = 7;
-        try{ httpd.Files.Add(key, new byte[NN]); }catch (ArgumentException){}
-      }
+      found = 7;
+      try{ httpd.Files.Add(key, new byte[NN]); }catch (Exception){ found = 1; }
     }
     if(found == 1){
       head+=NN+"\r\n\r\n";
@@ -920,7 +915,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.5.2, (C) kornienko.ru October 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.5.3, (C) kornienko.ru October 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
