@@ -490,12 +490,8 @@ class Session{
     if(NN > https.le){
       found=0;
     }else{
-      if(https.Files.ContainsKey(key)){
-        found = 1;
-      }else{
-        found = 7;
-        try{ https.Files.Add(key, new byte[NN]); }catch (ArgumentException){ }
-      }
+      found = 7;
+      try{ https.Files.Add(key, new byte[NN]); }catch(Exception){ found = 1; }
     }
     if(found == 1){
       head+=NN+"\r\n\r\n";
@@ -953,7 +949,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.3.2, (C) kornienko.ru October 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.3.3, (C) kornienko.ru October 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
