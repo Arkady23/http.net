@@ -25,7 +25,7 @@ Parameters:                                                                  Def
              files compressed using gzip method of the name.expansion.gz type
              are supported, for example - index.html.gz or library.js.gz etc.
      -p      Port that the server is listening on.                               8080
-     -b      Size of the read and write buffers.                                 16384
+     -b      Size of the read and write buffers.                                 32768
      -s      Number of requests being processed at the same time.                888
              The maximum number is limited by processor performance, RAM size
              and Windows settings.
@@ -133,4 +133,4 @@ If there is an error in the prg file:
 2.5.1. October 2024. Now the encoding specified in the charset parameter in the Content-Type header is applied, if it is specified correctly. UTF-8 is used by default.  
 2.5.2 October 2024. Fixed a flaw for redirecting to index.html.  
 2.5.3 October 2024. Fixed the error of adding a small file to the dictionary.  
-2.5.4 October 2024. Caching of small files has been removed due to the lack of effect.  
+2.5.4 October 2024. Caching of small files has been removed due to the lack of effect. Default read/write buffer size has been increased.  
