@@ -9,7 +9,7 @@ The number of threads should not be set immediately to the maximum possible. If 
 Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
 ```
 PS D:\work\httpd> ./http.net /?
-Multithreaded http.net server version 2.5.3, (C) kornienko.ru October 2024.
+Multithreaded http.net server version 2.5.4, (C) kornienko.ru October 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -39,8 +39,6 @@ Parameters:                                                                  Def
      -log    Size of the query log in rows. The log consists of two              10000
              interleaved versions http.net.x.log and http.net.y.log. If the
              size is set to less than 80, then the log is not kept.
-     -less   Maximum size of small files that should be cached. All such         524288
-             files will be stored in RAM to improve performance.
      -post   Maximum size of the accepted request to transfer to the script      33554432
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
@@ -135,3 +133,4 @@ If there is an error in the prg file:
 2.5.1. October 2024. Now the encoding specified in the charset parameter in the Content-Type header is applied, if it is specified correctly. UTF-8 is used by default.  
 2.5.2 October 2024. Fixed a flaw for redirecting to index.html.  
 2.5.3 October 2024. Fixed the error of adding a small file to the dictionary.  
+2.5.4 October 2024. Caching of small files has been removed due to the lack of effect.  
