@@ -16,7 +16,7 @@ public class httpd{
                       H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'";
   public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
   public const  int q9=2147483647;
-  public static int port=8080, st=888, qu=888, bu=16384, db=22, log9=10000, post=33554432,
+  public static int port=8080, st=888, qu=888, bu=32768, db=22, log9=10000, post=33554432,
                     logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
