@@ -131,7 +131,7 @@ If there is an error in the prg file:
 2.4.2. September 2024. The request log contains the number of the task in which it is being processed.  
 2.5.0. October 2024. The European encoding has been replaced with UTF-8. After switching the log to another file, all entries in this log are deleted for easy readability.  
 2.5.1. October 2024. Now the encoding specified in the charset parameter in the Content-Type header is applied, if it is specified correctly. UTF-8 is used by default.  
-2.5.2 October 2024. Fixed a flaw for redirecting to index.html.  
-2.5.3 October 2024. Fixed the error of adding a small file to the dictionary.  
-2.5.4 October 2024. Caching of small files has been removed due to the lack of effect. Default read/write buffer size has been increased.  
-2.5.6 October 2024. Fixing the task stack overflow error.  
+2.5.2. October 2024. Fixed a flaw for redirecting to index.html.  
+2.5.3. October 2024. Fixed the error of adding a small file to the dictionary.  
+2.5.4. October 2024. Caching of small files has been removed due to the lack of effect. Default read/write buffer size has been increased.  
+2.5.6. October 2024. Fixing the task stack overflow error.  
