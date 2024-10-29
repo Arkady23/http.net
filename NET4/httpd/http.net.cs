@@ -214,73 +214,79 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    while (httpd.notexit) await AcceptProc(await Server.AcceptAsync(), Server);
-  }
+    while (httpd.notexit) {
 
-  public async Task AcceptProc(Socket Client, Socket Server){
-    using(var Stream = new NetworkStream(Client,true)){
-      IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      string dt1=DateTime.UtcNow.ToString("R"), Content_T=httpd.CT_T;
-      cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
-      UTF = Encoding.GetEncoding(httpd.UTF8);
-      IP=Point.Address.ToString();
-      Port=Point.Port.ToString();
-      k=Content_Length=0;
-      x1=IP+" "+jt+"\t";
-      i=httpd.bu;
-      R=R1=R2=0;
-      l=1;
-      while (i>0 && l>0){
-        if(k>0 && i>k){
-          cont1=UTF.GetString(bytes,k,i-k);
-          k=0;
-        }
-        try{
-          i = await Stream.ReadAsync(bytes, 0, bytes.Length);
-        }catch(Exception){
-          i = -1;
-        }
-        if(i>0){
-          l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
-              ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
-        }else{
-          R2=1;
-        }
+      Socket Client = await Server.AcceptAsync();
+      NetworkStream Stream = null;
+      try{
+        Stream = new NetworkStream(Client,true);
+        R=R1=R2=0;
+      }catch(Exception){
+        R=6;    // Ошибки авторизации хакеров проигнорировать
       }
-
-      if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
-                   ref h1, ref Content_T);
-      if(R>0){
-        httpd.log2(x1+res);
-        head="Date: "+dt1+"\r\n"+h1+Content_T;
-        if(R>1){
-          if(File.Exists(res)){
-            x1=httpd.valStr(ref Content_Type,"charset");
-            if(x1.Length>0 && !String.Equals(x1,httpd.UTF8,StringComparison.CurrentCultureIgnoreCase)){
-              try{ UTF = Encoding.GetEncoding(x1); }catch(Exception){ }
-            }
-            if(R==2){
-              await send_wsf(Stream);
-            }else{
-              await send_prg(Stream);
-            }
+      if(R==0){
+        IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
+        string dt1=DateTime.UtcNow.ToString("R"), Content_T=httpd.CT_T;
+        cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
+        UTF = Encoding.GetEncoding(httpd.UTF8);
+        IP=Point.Address.ToString();
+        Port=Point.Port.ToString();
+        k=Content_Length=0;
+        x1=IP+" "+jt+"\t";
+        i=httpd.bu;
+        l=1;
+        while (i>0 && l>0){
+          if(k>0 && i>k){
+            cont1=UTF.GetString(bytes,k,i-k);
+            k=0;
+          }
+          try{
+            i = await Stream.ReadAsync(bytes, 0, bytes.Length);
+          }catch(Exception){
+            i = -1;
+          }
+          if(i>0){
+            l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
+                ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
           }else{
-            R=1;
+            R2=1;
           }
         }
-        if(R==1){
-          if(!gzExists(ref res, ref head)){
-            if(!File.Exists(res)){
-              res=httpd.DocumentRoot+httpd.DI;
-              if(!gzExists(ref res, ref head)){
-                if(!File.Exists(res)) R=0;
+
+        if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
+                     ref h1, ref Content_T);
+        if(R>0){
+          httpd.log2(x1+res);
+          head="Date: "+dt1+"\r\n"+h1+Content_T;
+          if(R>1){
+            if(File.Exists(res)){
+              x1=httpd.valStr(ref Content_Type,"charset");
+              if(x1.Length>0 && !String.Equals(x1,httpd.UTF8,StringComparison.CurrentCultureIgnoreCase)){
+                try{ UTF = Encoding.GetEncoding(x1); }catch(Exception){ }
+              }
+              if(R==2){
+                await send_wsf(Stream);
+              }else{
+                await send_prg(Stream);
+              }
+            }else{
+              R=1;
+            }
+          }
+          if(R==1){
+            if(!gzExists(ref res, ref head)){
+              if(!File.Exists(res)){
+                res=httpd.DocumentRoot+httpd.DI;
+                if(!gzExists(ref res, ref head)){
+                  if(!File.Exists(res)) R=0;
+                }
               }
             }
+            if(R==1) await type(Stream);
           }
-          if(R==1) await type(Stream);
         }
       }
-      Stream.Close();
+      if(Stream != null) Stream.Close();
     }
   }
 
@@ -885,7 +891,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.5.4, (C) kornienko.ru October 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.5.5, (C) kornienko.ru October 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
