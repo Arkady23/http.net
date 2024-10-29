@@ -229,83 +229,85 @@ class Session{
     https.i++;
     jt = https.i.ToString();
     bytes = new Byte[https.bu];
-    while (https.notexit) Accept(Server);
+    Accept(Server);
   }
 
   public async void Accept(Socket Server){
-    Socket Client = await Server.AcceptAsync();
-    SslStream Stream = null;
-    try{
-      Stream = new SslStream(new NetworkStream(Client,true),false);
-      Stream.AuthenticateAsServer(https.Cert,false,
-          System.Security.Authentication.SslProtocols.Tls12,false);
-      R=R1=R2=0;
-    }catch(Exception){
-      R=6;    // Ошибки авторизации хакеров проигнорировать
-    }
-    if(R==0){
-      string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
-      cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
-      IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      UTF = Encoding.GetEncoding(https.UTF8);
-      IP=Point.Address.ToString();
-      Port=Point.Port.ToString();
-      k=Content_Length=0;
-      x1=IP+" "+jt+"\t";
-      i=https.bu;
-      l=1;
-      while (i>0 && l>0){
-        if(k>0 && i>k){
-          cont1=UTF.GetString(bytes,k,i-k);
-          k=0;
-        }
-        try{
-          i = await Stream.ReadAsync(bytes, 0, bytes.Length);
-        }catch(Exception){
-          i = -1;
-        }
-        if(i>0){
-          l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
-              ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
-        }else{
-          R2=1;
-        }
+    while (https.notexit){
+      Socket Client = await Server.AcceptAsync();
+      SslStream Stream = null;
+      try{
+        Stream = new SslStream(new NetworkStream(Client,true),false);
+        Stream.AuthenticateAsServer(https.Cert,false,
+            System.Security.Authentication.SslProtocols.Tls12,false);
+        R=R1=R2=0;
+      }catch(Exception){
+        R=6;    // Ошибки авторизации хакеров проигнорировать
       }
-
-      if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
-                                  ref h1, ref Content_T);
-      if(R>0){
-        https.log2(x1+res);
-        head="Date: "+dt1+"\r\n"+h1+Content_T;
-        if(R>1){
-          if(File.Exists(res)){
-            x1=https.valStr(ref Content_Type,"charset");
-            if(x1.Length>0 && !String.Equals(x1,https.UTF8,StringComparison.CurrentCultureIgnoreCase)){
-              try{ UTF = Encoding.GetEncoding(x1); }catch(Exception){ }
-            }
-            if(R==2){
-              await send_wsf(Stream);
-            }else{
-              await send_prg(Stream);
-            }
+      if(R==0){
+        string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
+        cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
+        IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
+        UTF = Encoding.GetEncoding(https.UTF8);
+        IP=Point.Address.ToString();
+        Port=Point.Port.ToString();
+        k=Content_Length=0;
+        x1=IP+" "+jt+"\t";
+        i=https.bu;
+        l=1;
+        while (i>0 && l>0){
+          if(k>0 && i>k){
+            cont1=UTF.GetString(bytes,k,i-k);
+            k=0;
+          }
+          try{
+            i = await Stream.ReadAsync(bytes, 0, bytes.Length);
+          }catch(Exception){
+            i = -1;
+          }
+          if(i>0){
+            l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
+                ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
           }else{
-            R=1;
+            R2=1;
           }
         }
-        if(R==1){
-          if(!gzExists(ref res, ref head)){
-            if(!File.Exists(res)){
-              res=https.DocumentRoot+https.DI;
-              if(!gzExists(ref res, ref head)){
-                if(!File.Exists(res)) R=0;
+
+        if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
+                                  ref h1, ref Content_T);
+        if(R>0){
+          https.log2(x1+res);
+          head="Date: "+dt1+"\r\n"+h1+Content_T;
+          if(R>1){
+            if(File.Exists(res)){
+              x1=https.valStr(ref Content_Type,"charset");
+              if(x1.Length>0 && !String.Equals(x1,https.UTF8,StringComparison.CurrentCultureIgnoreCase)){
+                try{ UTF = Encoding.GetEncoding(x1); }catch(Exception){ }
+              }
+              if(R==2){
+                await send_wsf(Stream);
+              }else{
+                await send_prg(Stream);
+              }
+            }else{
+              R=1;
+            }
+          }
+          if(R==1){
+            if(!gzExists(ref res, ref head)){
+              if(!File.Exists(res)){
+                res=https.DocumentRoot+https.DI;
+                if(!gzExists(ref res, ref head)){
+                  if(!File.Exists(res)) R=0;
+                }
               }
             }
+            if(R==1) await type(Stream);
           }
-          if(R==1) await type(Stream);
         }
       }
+      if(Stream != null) Stream.Close();
     }
-    if(Stream != null) Stream.Close();
   }
 
   static void putCT(ref string c, string x){
