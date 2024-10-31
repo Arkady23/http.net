@@ -9,7 +9,7 @@ The number of threads should not be set immediately to the maximum possible. If 
 Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
 ```
 PS D:\work\httpd> ./http.net /?
-Multithreaded http.net server version 2.5.5, (C) kornienko.ru October 2024.
+Multithreaded http.net server version 2.5.6, (C) kornienko.ru October 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -134,4 +134,4 @@ If there is an error in the prg file:
 2.5.2. October 2024. Fixed a flaw for redirecting to index.html.  
 2.5.3. October 2024. Fixed the error of adding a small file to the dictionary.  
 2.5.4. October 2024. Caching of small files has been removed due to the lack of effect. Default read/write buffer size has been increased.  
-2.5.6. October 2024. Fixing the task stack overflow error.  
+2.5.5-2.5.6. October 2024. Fixing the task stack overflow error.  
