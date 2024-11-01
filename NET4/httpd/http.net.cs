@@ -17,7 +17,7 @@ public class httpd{
   public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
   public const  int q9=2147483647;
   public static int port=8080, st=888, qu=888, bu=32768, db=22, log9=10000, post=33554432,
-                    logi=0, i, k, maxVFP;
+                    logi=0, ip1=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -199,7 +199,7 @@ public class httpd{
 }
 
 class Session{
-  private int i,k,Content_Length;
+  private int ip1,i,k,Content_Length;
   private string cont1, h1, reso, res, head, heads, Host, Content_Type,
                  Content_Disposition, QUERY_STRING, IP, jt, Port, x1;
   private Task AcceptTask = null;
@@ -215,6 +215,7 @@ class Session{
   }
 
   public async void Accept(Socket Server){
+    if(AcceptTask != null) await AcceptTask;
     if(httpd.notexit) AcceptTask = AcceptProc(await Server.AcceptAsync(),Server);
   }
 
@@ -231,6 +232,7 @@ class Session{
       cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       UTF = Encoding.GetEncoding(httpd.UTF8);
+      ip1=Point.Address.GetHashCode();
       IP=Point.Address.ToString();
       Port=Point.Port.ToString();
       k=Content_Length=0;
@@ -278,15 +280,20 @@ class Session{
         if(R==1){
           if(!gzExists(ref res, ref head)){
             if(!File.Exists(res)){
-              res=httpd.DocumentRoot+httpd.DI;
-              if(!gzExists(ref res, ref head)){
-                if(!File.Exists(res)) R=0;
+              if(httpd.ip1==ip1){
+                R=0;
+              }else{
+                res=httpd.DocumentRoot+httpd.DI;
+                if(!gzExists(ref res, ref head)){
+                  if(!File.Exists(res)) R=0;
+                }
               }
             }
           }
           if(R==1) await type(Stream);
         }
       }
+      httpd.ip1=ip1;
     }
     if(Stream != null) Stream.Close();
     Accept(Server);
@@ -893,7 +900,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.5.6, (C) a.kornienko.ru October 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.6.0, (C) a.kornienko.ru November 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
