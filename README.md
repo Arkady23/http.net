@@ -134,4 +134,4 @@ If there is an error in the prg file:
 2.5.2. October 2024. Fixed a flaw for redirecting to index.html.  
 2.5.3. October 2024. Fixed the error of adding a small file to the dictionary.  
 2.5.4. October 2024. Caching of small files has been removed due to the lack of effect. Default read/write buffer size has been increased.  
-2.5.5-2.6.0. October 2024. Fixing the task stack overflow error.  
+2.5.5-2.6.0. October-November 2024. Fixing the task stack overflow error??? Soon 2.6.1  
