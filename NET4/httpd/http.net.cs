@@ -14,10 +14,10 @@ public class httpd{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
                       H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'";
-  public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
-  public const  int q9=2147483647;
-  public static int port=8080, st=888, qu=888, bu=32768, db=22, log9=10000, post=33554432,
-                    logi=0, ip1=0, i, k, maxVFP;
+  public const string Protocol="http",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
+  public const  int i9=2147483647;
+  public static int port=8080, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
+                    logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="http.net.x.log", logY="http.net.y.log", logZ="",
@@ -31,7 +31,6 @@ public class httpd{
   public static Encoding vfpw = null;
   public static bool notexit=true, VFPclr=false;
   public static byte[] vfpb = null;
-  public static long DTi;
   Socket Server = null;
   Session[] Session = null;
   
@@ -44,7 +43,6 @@ public class httpd{
     vfpb = new byte[db];
     Server.Bind(ep);
     Server.Listen(qu);
-    if(log9>0) log("\tThe http-server is running...");
     if(vfpa!=null){
       try{
         vfp[0] = Activator.CreateInstance(vfpa);
@@ -58,14 +56,14 @@ public class httpd{
         VFPclr=vfp[0].Eval("file("+CLR+")");
       }
     }
-    ThreadPool.GetMinThreads(out i, out k);
-    if(st>i) ThreadPool.SetMinThreads(st,st);
+    i= st<8?8:st;
+    ThreadPool.SetMinThreads(i,i);
     i=0;    // Задание начального индекса для создания переменной jt в Session
     try{
       Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-      if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
+      log2("\tThe http-server are waiting for input requests...");
     }catch(Exception){
-      if(log9>0) log("\t"+"There were problems when creating threads. Try updating Windows.");
+      log2("\tThere were problems when creating threads. Try updating Windows.");
       notexit=false;
     }
   }
@@ -73,7 +71,7 @@ public class httpd{
   public void StopServer(){
     notexit=false;
     if(vfpa != null) for(i=0; i<db; i++) if(vfpb[i]>0)
-                     try{ vfp[i].Quit(); }catch(System.Runtime.InteropServices.COMException){}
+                     try{ vfp[i].Quit(); }catch(System.Runtime.InteropServices.COMException){ }
     if(logFS!=null){
       // Восстановить вывод на консоль
       Console.SetError(TE);
@@ -85,7 +83,6 @@ public class httpd{
   public static void log(object x){
     // Добавить сообщение в журнал с чередующимися версиями.
     // Сначала писать в X, затем в Y, затем снова в X и т.д.
-    Interlocked.Exchange(ref DTi,DateTime.UtcNow.Ticks);
 
     // Нужно ли начать запись с начала журнала?
     if(logi>=log9 && logFS!=null){
@@ -109,11 +106,8 @@ public class httpd{
     // Записать в файл
     try{
       Console.WriteLine(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t"+x);
-      Thread.Sleep(3000);
-      if(DTi+30000000<DateTime.UtcNow.Ticks){
-        logSW.Flush();
-        logFS.Flush();
-      }
+      logSW.Flush();
+      logFS.Flush();
     }catch(ObjectDisposedException){
       log9=0;
     }catch(Exception){
@@ -187,7 +181,7 @@ public class httpd{
 
   public static int valInt(string x){
     int z;
-    try{ z=int.Parse(x); }catch(Exception){ z=q9; }
+    try{ z=int.Parse(x); }catch(Exception){ z=i9; }
     return z;
   }
 
@@ -199,10 +193,9 @@ public class httpd{
 }
 
 class Session{
-  private int ip1,i,k,Content_Length;
+  private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, heads, Host, Content_Type,
-                 Content_Disposition, QUERY_STRING, IP, jt, Port, x1;
-  private Task AcceptTask = null;
+                 Content_Disposition, QUERY_STRING, IP, jt, Port, x1, x2;
   private byte l, R, R1, R2;
   private byte[] bytes;
   private Encoding UTF;
@@ -215,88 +208,92 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    if(AcceptTask != null) await AcceptTask;
-    if(httpd.notexit) AcceptTask = AcceptProc(await Server.AcceptAsync(),Server);
-  }
-
-  public async Task AcceptProc(Socket Client, Socket Server){
+    string dt1,Content_T;
     NetworkStream Stream = null;
-    try{
-      Stream = new NetworkStream(Client,true);
-      R=R1=R2=0;
-    }catch(Exception){
-      R=6;    // Ошибки авторизации хакеров проигнорировать
-    }
-    if(R==0){
-      string dt1=DateTime.UtcNow.ToString("R"), Content_T=httpd.CT_T;
-      cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
+    Socket Client = null;
+    while (httpd.notexit){
+// httpd.log2("Stack Count: "+(new StackTrace()).FrameCount.ToString());
+      Client = await Server.AcceptAsync();
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      UTF = Encoding.GetEncoding(httpd.UTF8);
-      ip1=Point.Address.GetHashCode();
       IP=Point.Address.ToString();
-      Port=Point.Port.ToString();
-      k=Content_Length=0;
       x1=IP+" "+jt+"\t";
-      i=httpd.bu;
-      l=1;
-      while (i>0 && l>0){
-        if(k>0 && i>k){
-          cont1=UTF.GetString(bytes,k,i-k);
-          k=0;
-        }
-        try{
-          i = await Stream.ReadAsync(bytes, 0, bytes.Length);
-        }catch(Exception){
-          i = -1;
-        }
-        if(i>0){
-          l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
-              ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
-        }else{
-          R2=1;
-        }
-      }
-
-      if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
-                   ref h1, ref Content_T);
-      if(R>0){
-        httpd.log2(x1+res);
-        head="Date: "+dt1+"\r\n"+h1+Content_T;
-        if(R>1){
-          if(File.Exists(res)){
-            x1=httpd.valStr(ref Content_Type,"charset");
-            if(x1.Length>0 && !String.Equals(x1,httpd.UTF8,StringComparison.CurrentCultureIgnoreCase)){
-              try{ UTF = Encoding.GetEncoding(x1); }catch(Exception){ }
-            }
-            if(R==2){
-              await send_wsf(Stream);
-            }else{
-              await send_prg(Stream);
+      try{ Stream = new NetworkStream(Client,true); }catch(Exception){ }
+      if(Stream != null){
+        Content_T=httpd.CT_T;
+        dt1=DateTime.UtcNow.ToString("R");
+        cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
+        UTF = Encoding.GetEncoding(httpd.UTF8);
+        Port=Point.Port.ToString();
+        k=Content_Length=0;
+        i=httpd.bu;
+        R=R1=R2=0;
+        l=1;
+        while (i>0 && l>0){
+          if(k>0 && i>k){
+            cont1=UTF.GetString(bytes,k,i-k);
+            k=0;
+          }
+          try{
+            i = await Stream.ReadAsync(bytes, 0, bytes.Length);
+          }catch(Exception){
+            i = -1;
+          }
+          if(i>0){
+            l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
+                ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
+            if(Host.Length>0){
+              res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
+                  ref h1, ref Content_T);
+              if(R==0) l=R;    // Дальше читать бессмысленно
             }
           }else{
-            R=1;
+            R2=1;
           }
         }
-        if(R==1){
-          if(!gzExists(ref res, ref head)){
-            if(!File.Exists(res)){
-              if(httpd.ip1==ip1){
-                R=0;
+        httpd.log2(x1+res);
+        if(R>0){
+          head="Date: "+dt1+"\r\n"+h1+Content_T;
+          if(R>1){
+            if(File.Exists(res)){
+              x2=httpd.valStr(ref Content_Type,"charset");
+              if(x2.Length>0 && !String.Equals(x2,httpd.UTF8,StringComparison.CurrentCultureIgnoreCase)){
+                try{ UTF = Encoding.GetEncoding(x2); }catch(Exception){ }
+              }
+              if(R==2){
+                await send_wsf(Stream);
               }else{
+                await send_prg(Stream);
+              }
+            }else{
+              R=1;
+            }
+          }
+          if(R==1){
+            if(!gzExists(ref res, ref head)){
+              if(!File.Exists(res)){
                 res=httpd.DocumentRoot+httpd.DI;
                 if(!gzExists(ref res, ref head)){
-                  if(!File.Exists(res)) R=0;
+                  if(!File.Exists(res)){
+                    R=0;
+                    await failure(Stream,"404 Not Found");
+                  }
                 }
               }
             }
+            if(R==1){
+              await type(Stream);
+            }
           }
-          if(R==1) await type(Stream);
+        }else{
+          await failure(Stream,"403 Forbidden");
         }
+        Stream.Close();
+      }else{
+        httpd.log2(x1+"500 Internal Server Error");
       }
-      httpd.ip1=ip1;
+      Client = null;
+      Stream = null;
     }
-    if(Stream != null) Stream.Close();
-    Accept(Server);
   }
 
   static void putCT(ref string c, string x){
@@ -335,12 +332,13 @@ class Session{
 
   static byte getHeaders(Encoding UTF, ref byte[] bytes, ref string cont1, ref int k,
                 ref string reso, ref string Host, ref string Content_Type,
-                ref string Content_Disposition, ref int Content_Length, ref string heads){
+                ref string Content_Disposition, ref int Content_Length,
+                ref string heads){
     byte b=0;
     string lin=line1(UTF, ref bytes, ref cont1, ref k, ref b),n,h;
 
     while (lin.Length>0){
-// Console.WriteLine("lin=|"+lin+"|");
+// Console.WriteLine(lin);
 // httpd.log2(lin);
       h=httpd.afterStr1(ref lin,":");
       h=httpd.ltri(ref h);
@@ -374,7 +372,7 @@ class Session{
   static string prepResource(ref string reso, ref string QUERY_STRING, ref string Host,
                              ref byte R, ref byte R1, ref string h1, ref string Content_T){
     string sub,res="",ext=".";
-    if(reso.Length>0 && Host.Length>0){
+    if(reso.Length>0){
       res=HttpUtility.UrlDecode(reso);
       QUERY_STRING=httpd.afterStr1(ref res,"?");
       res=httpd.beforStr1(ref res,"?");
@@ -461,8 +459,17 @@ class Session{
       }
       reso=sub+res;
       res=httpd.DocumentRoot+reso;
+    }else{
+      R=0;
     }
     return res;
+  }
+
+  async Task failure(System.Net.Sockets.NetworkStream Stream, string z){
+    byte[] bytes1=UTF.GetBytes(httpd.H1+z+"\r\n");
+    try{
+      await Stream.WriteAsync(bytes1,0,bytes1.Length);
+    }catch(Exception){ }
   }
 
   async Task type(System.Net.Sockets.NetworkStream Stream){
@@ -514,6 +521,7 @@ class Session{
     }
 
     wsf.EnvironmentVariables["SCRIPT_FILENAME"] = httpd.fullres(ref res);
+    wsf.EnvironmentVariables["SERVER_PROTOCOL"] = httpd.Protocol;
     wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
     wsf.EnvironmentVariables["POST_FILENAME"] = filename;
     wsf.EnvironmentVariables["HTTP_HEADERS"] = heads;
@@ -629,7 +637,7 @@ value2
 
     try{
       await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(Exception){}
+    }catch(Exception){ }
 
     Proc.WaitForExit();
     // Освободить ресурсы
@@ -640,9 +648,7 @@ value2
     int j=-1, N=0;
     byte[] bytes1;
     string fullprg=httpd.fullres(ref res),prg=httpd.afterStr9(ref res,"/"),
-           dirprg=System.IO.Path.GetDirectoryName(
-           System.Reflection.Assembly.GetEntryAssembly().Location),dirname="",
-           filename="";
+           dirname="", filename="";
 
     if(httpd.vfpa!=null){
       for(j=0; j<httpd.db; j++){
@@ -679,8 +685,9 @@ value2
       httpd.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
       httpd.vfp[j].DoCmd("SET DEFA TO (\""+httpd.beforStr9(ref fullprg,"/")+"\")");
       httpd.vfp[j].SetVar("POST_FILENAME",filename.Length>0?httpd.Folder+"/"+filename:"");
-      httpd.vfp[j].SetVar("SCRIPT_FILENAME",fullprg);
+      httpd.vfp[j].SetVar("SERVER_PROTOCOL",httpd.Protocol);
       httpd.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
+      httpd.vfp[j].SetVar("SCRIPT_FILENAME",fullprg);
       httpd.vfp[j].SetVar("HTTP_HEADERS",heads);
       httpd.vfp[j].SetVar("REMOTE_ADDR",IP);
 
@@ -820,7 +827,7 @@ class main{
   }
 
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, db9=80, p9=65535, s9=15383, post9=33554432, log1=80;
+    int i, k, b9=131072, db9=1000, p9=65535, q9=2147483647, s9=1000, post9=33554432, log1=80;
     bool l=true;
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
@@ -847,7 +854,7 @@ class main{
         i++;
         if(i < Args.Length){
           k=httpd.valInt(Args[i]);
-          httpd.qu=(k > 0 && k <= httpd.q9)? k : httpd.q9;
+          httpd.qu=(k > 0 && k <= q9)? k : q9;
         }            
         break;
       case "-s":
@@ -900,7 +907,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.6.0, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.6.1, (C) a.kornienko.ru November 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -917,16 +924,13 @@ Parameters:                                                                  Def
              are supported, for example - index.html.gz or library.js.gz etc.
      -p      Port that the server is listening on.                               "+httpd.port.ToString()+@"
      -b      Size of the read and write buffers.                                 "+httpd.bu.ToString()+@"
-     -s      Number of requests being processed at the same time.                "+httpd.st.ToString()+@"
-             The maximum number is limited by processor performance, RAM size
-             and Windows settings.
-     -q      Number of additional requests stored in the queue if the number     "+httpd.qu.ToString()+@"
-             of simultaneous requests specified by the -s parameter is
-             exceeded. If the amount of requests processed and pending in the
-             queue is exceeded, a denial of service is sent to the client.
+     -s      Number of requests being processed at the same time. Maximum        "+httpd.st.ToString()+@"
+             value is 1000.
+     -q      Number requests stored in the queue.                                "+httpd.qu.ToString()+@"
      -db     Maximum number of dynamically running MS VFP DBMS instances.        "+httpd.db.ToString()+@"
-             Extending scripts to run VFP - prg. Pprocesses are started as
-             needed by simultaneous client requests to the set value.
+             Extending scripts to run VFP - prg. Processes are started as
+             needed by simultaneous client requests to the set value. Maximum
+             value is 1000.
      -log    Size of the query log in rows. The log consists of two              "+httpd.log9.ToString()+@"
              interleaved versions http.net.x.log and http.net.y.log. If the
              size is set to less than "+log1.ToString()+@", then the log is not kept.
@@ -934,12 +938,12 @@ Parameters:                                                                  Def
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
              variable POST_FILENAME. Other generated environment variables -
-             SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS, REMOTE_ADDR. If
-             the form-... directive is missing from the request data, then
-             incoming data stream will be placed entirely in a file. This
-             feature can be used to transfer files to the server. In this
-             case, the file name will be in the environment variable
-             POST_FILENAME.
+             SERVER_PROTOCOL, SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS,
+             REMOTE_ADDR. If the form-... directive is missing from the
+             request data, then incoming data stream will be placed entirely
+             in a file. This feature can be used to transfer files to the
+             server. In this case, the file name will be in the environment
+             variable POST_FILENAME.
      -proc   Script handler used. If necessary, you must also include            "+httpd.Proc+@"
              the full path to the executable file. By default, the component
              built into Microsoft Windows OS is used, a very fast script
