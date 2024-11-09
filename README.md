@@ -8,8 +8,8 @@ The number of threads should not be set immediately to the maximum possible. If 
 
 Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
 ```
-PS D:\work\httpd> ./http.net /?
-Multithreaded http.net server version 2.6.0, (C) kornienko.ru November 2024.
+PS D:\> D:\work\httpd\http.net.exe /?
+Multithreaded http.net server version 2.6.1, (C) a.kornienko.ru November 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -26,16 +26,13 @@ Parameters:                                                                  Def
              are supported, for example - index.html.gz or library.js.gz etc.
      -p      Port that the server is listening on.                               8080
      -b      Size of the read and write buffers.                                 32768
-     -s      Number of requests being processed at the same time.                888
-             The maximum number is limited by processor performance, RAM size
-             and Windows settings.
-     -q      Number of additional requests stored in the queue if the number     888
-             of simultaneous requests specified by the -s parameter is
-             exceeded. If the amount of requests processed and pending in the
-             queue is exceeded, a denial of service is sent to the client.
-     -db     Maximum number of dynamically running MS VFP DBMS instances.        22
-             Extending scripts to run VFP - prg. Pprocesses are started as
-             needed by simultaneous client requests to the set value.
+     -s      Number of requests being processed at the same time. Maximum        20
+             value is 1000.
+     -q      Number requests stored in the queue.                                600
+     -db     Maximum number of dynamically running MS VFP DBMS instances.        20
+             Extending scripts to run VFP - prg. Processes are started as
+             needed by simultaneous client requests to the set value. Maximum
+             value is 1000.
      -log    Size of the query log in rows. The log consists of two              10000
              interleaved versions http.net.x.log and http.net.y.log. If the
              size is set to less than 80, then the log is not kept.
@@ -43,12 +40,12 @@ Parameters:                                                                  Def
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
              variable POST_FILENAME. Other generated environment variables -
-             SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS, REMOTE_ADDR. If
-             the form-... directive is missing from the request data, then
-             incoming data stream will be placed entirely in a file. This
-             feature can be used to transfer files to the server. In this
-             case, the file name will be in the environment variable
-             POST_FILENAME.
+             SERVER_PROTOCOL, SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS,
+             REMOTE_ADDR. If the form-... directive is missing from the
+             request data, then incoming data stream will be placed entirely
+             in a file. This feature can be used to transfer files to the
+             server. In this case, the file name will be in the environment
+             variable POST_FILENAME.
      -proc   Script handler used. If necessary, you must also include            cscript.exe
              the full path to the executable file. By default, the component
              built into Microsoft Windows OS is used, a very fast script
@@ -57,6 +54,7 @@ Parameters:                                                                  Def
              using cscript.exe if no additional parameters are specified,
              the //Nologo parameter is used.
      -ext    Extension of the script files.                                      wsf
+PS D:\>
 ```
 Корневая папка для доменов (по умолчанию www) должна содержать папки, соответствующие доменному имени и поддомену запрашиваемого ресурса. Например, если запрос выглядит как http://a.kornienko.ru или https://a.kornienko.ru, то в корневой папке для доменов должна быть папка с именем a.kornienko.ru. Если вам нужно предоставить псевдонимам другие имена, вы можете создать папку в корневой папке в качестве символической ссылки на другую папку.  
 
@@ -134,4 +132,5 @@ If there is an error in the prg file:
 2.5.2. October 2024. Fixed a flaw for redirecting to index.html.  
 2.5.3. October 2024. Fixed the error of adding a small file to the dictionary.  
 2.5.4. October 2024. Caching of small files has been removed due to the lack of effect. Default read/write buffer size has been increased.  
-2.5.5-2.6.0. October-November 2024. Fixing the task stack overflow error??? Soon 2.6.1  
+2.5.5-2.6.0. October-November 2024. Fixing the task stack overflow error.  
+2.6.1. November 2024. Default values have been changed for more stable server functioning. The SERVER_PROTOCOL environment variable has been added.  
