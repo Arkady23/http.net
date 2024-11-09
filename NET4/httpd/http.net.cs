@@ -185,11 +185,6 @@ public class httpd{
     return z;
   }
 
-  public static int find10(ref byte[] bytes, int i){
-    if(i<bytes.Length && bytes[i]!=10) i=find10(ref bytes,i+1);
-    return i;
-  }
-
 }
 
 class Session{
@@ -315,8 +310,10 @@ class Session{
     int i;
     string z=cont1;
     cont1="";
-    i=httpd.find10(ref bytes,k);
-    if(i<bytes.Length){
+    i=Array.IndexOf(bytes,(byte)10,k);
+    if(i<0){
+      b=1;
+    }else{
       if(i>0 && bytes[i-1]==13){
         z+=UTF.GetString(bytes,k,i-k-1);
       }else{
@@ -324,8 +321,6 @@ class Session{
       }
       k=i+1;
       b=0;
-    }else{
-      b=1;
     }
     return z;
   }
