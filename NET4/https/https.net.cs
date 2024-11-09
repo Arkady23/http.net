@@ -16,10 +16,10 @@ public class https{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
                       H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'";
-  public const string OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
-  public const  int q9=2147483647;
-  public static int port=8443, st=888, qu=888, bu=32768, db=22, log9=10000, post=33554432,
-                    logi=0, ip1=0, i, k, maxVFP;
+  public const string Protocol="https",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
+  public const  int i9=2147483647;
+  public static int port=8443, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
+                    logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
                        Proc="cscript.exe", Args="", Ext="wsf",
                        logX="https.net.x.log", logY="https.net.y.log", logZ="",
@@ -34,7 +34,6 @@ public class https{
   public static Encoding vfpw = null;
   public static byte[] vfpb = null;
   public static bool notexit=true, VFPclr=false;
-  public static long DTi;
   Socket Server = null;
   Session[] Session = null;
   
@@ -61,7 +60,6 @@ public class https{
         vfpb = new byte[db];
         Server.Bind(ep);
         Server.Listen(qu);
-        if(log9>0) log("\tThe https-server is running...");
         if(vfpa!=null){
           try{
             vfp[0] = Activator.CreateInstance(vfpa);
@@ -75,14 +73,14 @@ public class https{
             VFPclr=vfp[0].Eval("file("+CLR+")");
           }
         }
-        ThreadPool.GetMinThreads(out i, out k);
-        if(st>i) ThreadPool.SetMinThreads(st,st);
+        i= st<8?8:st;
+        ThreadPool.SetMinThreads(i,i);
         i=0;    // Задание начального индекса для создания переменной jt в Session
         try{
           Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-          if(log9>0) log("\t"+st.ToString()+" tasks are waiting for input requests...");
+          log2("\tThe https-server are waiting for input requests...");
         }catch(Exception){
-          if(log9>0) log("\t"+"There were problems when creating threads. Try updating Windows.");
+          log2("\tThere were problems when creating threads. Try updating Windows.");
           notexit=false;
         }
       }
@@ -104,7 +102,6 @@ public class https{
   public static void log(object x){
     // Добавить сообщение в журнал с чередующимися версиями.
     // Сначала писать в X, затем в Y, затем снова в X и т.д.
-    Interlocked.Exchange(ref DTi,DateTime.UtcNow.Ticks);
 
     // Нужно ли начать запись с начала журнала?
     if(logi>=log9 && logFS!=null){
@@ -128,11 +125,8 @@ public class https{
     // Записать в файл
     try{
       Console.WriteLine(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t"+x);
-      Thread.Sleep(3000);
-      if(DTi+30000000<DateTime.UtcNow.Ticks){
-        logSW.Flush();
-        logFS.Flush();
-      }
+      logSW.Flush();
+      logFS.Flush();
     }catch(ObjectDisposedException){
       log9=0;
     }catch(Exception){
@@ -206,7 +200,7 @@ public class https{
 
   public static int valInt(string x){
     int z;
-    try{ z=int.Parse(x); }catch(Exception){ z=q9; }
+    try{ z=int.Parse(x); }catch(Exception){ z=i9; }
     return z;
   }
 
@@ -218,10 +212,9 @@ public class https{
 }
 
 class Session{
-  private int ip1,i,k,Content_Length;
+  private int i,k,Content_Length;
   private string cont1, h1, reso, res, head, heads, Host, Content_Type,
-                 Content_Disposition, QUERY_STRING, IP, jt, Port, x1;
-  private Task AcceptTask = null;
+                 Content_Disposition, QUERY_STRING, IP, jt, Port, x1, x2;
   private byte l, R, R1, R2;
   private byte[] bytes;
   private Encoding UTF;
@@ -234,89 +227,100 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    if(AcceptTask != null) await AcceptTask;
-    if(https.notexit) AcceptTask = AcceptProc(await Server.AcceptAsync(),Server);
-  }
-
-  public async Task AcceptProc(Socket Client, Socket Server){
+    string dt1,Content_T;
     SslStream Stream = null;
-    try{
-      Stream = new SslStream(new NetworkStream(Client,true),false);
-      Stream.AuthenticateAsServer(https.Cert,false,
-          System.Security.Authentication.SslProtocols.Tls12,false);
-      R=R1=R2=0;
-    }catch(Exception){
-      R=6;    // Ошибки авторизации хакеров проигнорировать
-    }
-    if(R==0){
-      string dt1=DateTime.UtcNow.ToString("R"), Content_T=https.CT_T;
-      cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
+    Socket Client = null;
+    while (https.notexit){
+      Client = await Server.AcceptAsync();
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
-      UTF = Encoding.GetEncoding(https.UTF8);
-      ip1=Point.Address.GetHashCode();
       IP=Point.Address.ToString();
-      Port=Point.Port.ToString();
-      k=Content_Length=0;
       x1=IP+" "+jt+"\t";
-      i=https.bu;
-      l=1;
-      while (i>0 && l>0){
-        if(k>0 && i>k){
-          cont1=UTF.GetString(bytes,k,i-k);
-          k=0;
-        }
-        try{
-          i = await Stream.ReadAsync(bytes, 0, bytes.Length);
-        }catch(Exception){
-          i = -1;
-        }
-        if(i>0){
-          l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
-              ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
-        }else{
-          R2=1;
+      try{
+        Stream = new SslStream(new NetworkStream(Client,true),false);
+        Stream.AuthenticateAsServer(https.Cert,false,
+            System.Security.Authentication.SslProtocols.Tls12,false);
+      }catch(Exception){
+        if(Stream != null){
+          Stream.Close();
+          Stream = null;
         }
       }
-
-      if(i>=0) res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
-                                ref h1, ref Content_T);
-      if(R>0){
-        https.log2(x1+res);
-        head="Date: "+dt1+"\r\n"+h1+Content_T;
-        if(R>1){
-          if(File.Exists(res)){
-            x1=https.valStr(ref Content_Type,"charset");
-            if(x1.Length>0 && !String.Equals(x1,https.UTF8,StringComparison.CurrentCultureIgnoreCase)){
-              try{ UTF = Encoding.GetEncoding(x1); }catch(Exception){ }
-            }
-            if(R==2){
-              await send_wsf(Stream);
-            }else{
-              await send_prg(Stream);
+      if(Stream != null){
+        Content_T=https.CT_T;
+        dt1=DateTime.UtcNow.ToString("R");
+        cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
+        UTF = Encoding.GetEncoding(https.UTF8);
+        Port=Point.Port.ToString();
+        k=Content_Length=0;
+        i=https.bu;
+        R=R1=R2=0;
+        l=1;
+        while (i>0 && l>0){
+          if(k>0 && i>k){
+            cont1=UTF.GetString(bytes,k,i-k);
+            k=0;
+          }
+          try{
+            i = await Stream.ReadAsync(bytes, 0, bytes.Length);
+          }catch(Exception){
+            i = -1;
+          }
+          if(i>0){
+            l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
+                ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
+            if(Host.Length>0){
+              res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
+                               ref h1, ref Content_T);
+              if(R==0) l=R;    // Дальше читать бессмысленно
             }
           }else{
-            R=1;
+            R2=1;
           }
         }
-        if(R==1){
-          if(!gzExists(ref res, ref head)){
-            if(!File.Exists(res)){
-              if(https.ip1==ip1){
-                R=0;
+        https.log2(x1+res);
+        if(R>0){
+          head="Date: "+dt1+"\r\n"+h1+Content_T;
+          if(R>1){
+            if(File.Exists(res)){
+              x2=https.valStr(ref Content_Type,"charset");
+              if(x2.Length>0 && !String.Equals(x1,https.UTF8,StringComparison.CurrentCultureIgnoreCase)){
+                try{ UTF = Encoding.GetEncoding(x2); }catch(Exception){ }
+              }
+              if(R==2){
+                await send_wsf(Stream);
               }else{
+                await send_prg(Stream);
+              }
+            }else{
+              R=1;
+            }
+          }
+          if(R==1){
+            if(!gzExists(ref res, ref head)){
+              if(!File.Exists(res)){
                 res=https.DocumentRoot+https.DI;
                 if(!gzExists(ref res, ref head)){
-                  if(!File.Exists(res)) R=0;
+                  if(!File.Exists(res)){
+                    R=0;
+                    await failure(Stream,"404 Not Found");
+                  }
                 }
               }
             }
+            if(R==1){
+              await type(Stream);
+            }
           }
-          if(R==1) await type(Stream);
+        }else{
+          await failure(Stream,"403 Forbidden");
         }
+        Stream.Close();
+      }else{
+        https.log2(x1+"500 Internal Server Error");
       }
+      Client = null;
+      Stream = null;
     }
-    if(Stream != null) Stream.Close();
-    Accept(Server);
   }
 
   static void putCT(ref string c, string x){
@@ -333,8 +337,8 @@ class Session{
     return L;
   }
 
-  static string line1(Encoding UTF, ref byte[] bytes, ref string cont1,
-                      ref int k, ref byte b){
+  static string line1(Encoding UTF, ref byte[] bytes, ref string cont1, ref int k,
+                      ref byte b){
     int i;
     string z=cont1;
     cont1="";
@@ -361,7 +365,7 @@ class Session{
     string lin=line1(UTF, ref bytes, ref cont1, ref k, ref b),n,h;
 
     while (lin.Length>0){
-// Console.WriteLine("lin=|"+lin+"|");
+// Console.WriteLine(lin);
 // https.log2(lin);
       h=https.afterStr1(ref lin,":");
       h=https.ltri(ref h);
@@ -395,7 +399,7 @@ class Session{
   static string prepResource(ref string reso, ref string QUERY_STRING, ref string Host,
                              ref byte R, ref byte R1, ref string h1, ref string Content_T){
     string sub,res="",ext=".";
-    if(reso.Length>0 && Host.Length>0){
+    if(reso.Length>0){
       res=HttpUtility.UrlDecode(reso);
       QUERY_STRING=https.afterStr1(ref res,"?");
       res=https.beforStr1(ref res,"?");
@@ -482,9 +486,19 @@ class Session{
       }
       reso=sub+res;
       res=https.DocumentRoot+reso;
+    }else{
+      R=0;
     }
     return res;
   }
+
+  async Task failure(SslStream Stream, string z){
+    byte[] bytes1=UTF.GetBytes(https.H1+z+"\r\n");
+    try{
+      await Stream.WriteAsync(bytes1,0,bytes1.Length);
+    }catch(Exception){ }
+  }
+
 
   async Task type(SslStream Stream){
     // Отправка файла
@@ -535,6 +549,7 @@ class Session{
     }
 
     wsf.EnvironmentVariables["SCRIPT_FILENAME"] = https.fullres(ref res);
+    wsf.EnvironmentVariables["SERVER_PROTOCOL"] = https.Protocol;
     wsf.EnvironmentVariables["QUERY_STRING"] = QUERY_STRING;
     wsf.EnvironmentVariables["POST_FILENAME"] = filename;
     wsf.EnvironmentVariables["HTTP_HEADERS"] = heads;
@@ -661,9 +676,7 @@ value2
     int j=-1, N=0;
     byte[] bytes1;
     string fullprg=https.fullres(ref res),prg=https.afterStr9(ref res,"/"),
-           dirprg=System.IO.Path.GetDirectoryName(
-           System.Reflection.Assembly.GetEntryAssembly().Location),dirname="",
-           filename="";
+           dirname="", filename="";
 
     if(https.vfpa!=null){
       for(j=0; j<https.db; j++){
@@ -700,8 +713,9 @@ value2
       https.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
       https.vfp[j].DoCmd("SET DEFA TO (\""+https.beforStr9(ref fullprg,"/")+"\")");
       https.vfp[j].SetVar("POST_FILENAME",filename.Length>0?https.Folder+"/"+filename:"");
-      https.vfp[j].SetVar("SCRIPT_FILENAME",fullprg);
+      https.vfp[j].SetVar("SERVER_PROTOCOL",https.Protocol);
       https.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
+      https.vfp[j].SetVar("SCRIPT_FILENAME",fullprg);
       https.vfp[j].SetVar("HTTP_HEADERS",heads);
       https.vfp[j].SetVar("REMOTE_ADDR",IP);
 
@@ -843,7 +857,7 @@ class main{
   }
 
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, db9=80, p9=65535, s9=15383, post9=33554432, log1=80;
+    int i, k, b9=131072, db9=50, p9=65535, q9=2147483647, s9=50, post9=33554432, log1=80;
     bool l=true;
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
@@ -870,7 +884,7 @@ class main{
         i++;
         if(i < Args.Length){
           k=https.valInt(Args[i]);
-          https.qu=(k > 0 && k <= https.q9)? k : https.q9;
+          https.qu=(k > 0 && k <= q9)? k : q9;
         }            
         break;
       case "-s":
@@ -927,7 +941,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.4.0, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.4.1, (C) a.kornienko.ru November 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
@@ -948,16 +962,13 @@ Parameters:                                                                  Def
              and in the root folder containing the domains.
      -p      Port that the server is listening on.                               "+https.port.ToString()+@"
      -b      Size of the read and write buffers.                                 "+https.bu.ToString()+@"
-     -s      Number of requests being processed at the same time.                "+https.st.ToString()+@"
-             The maximum number is limited by processor performance, RAM size
-             and Windows settings.
-     -q      Number of additional requests stored in the queue if the number     "+https.qu.ToString()+@"
-             of simultaneous requests specified by the -s parameter is
-             exceeded. If the amount of requests processed and pending in the
-             queue is exceeded, a denial of service is sent to the client.
+     -s      Number of requests being processed at the same time. Maximum        "+https.st.ToString()+@"
+             value is 1000.
+     -q      Number requests stored in the queue.                                "+https.qu.ToString()+@"
      -db     Maximum number of dynamically running MS VFP DBMS instances.        "+https.db.ToString()+@"
-             Extending scripts to run VFP - prg. Pprocesses are started as
-             needed by simultaneous client requests to the set value.
+             Extending scripts to run VFP - prg. Processes are started as
+             needed by simultaneous client requests to the set value. Maximum
+             value is 1000.
      -log    Size of the query log in rows. The log consists of two              "+https.log9.ToString()+@"
              interleaved versions http.net.x.log and http.net.y.log. If the
              size is set to less than "+log1.ToString()+@", then the log is not kept.
@@ -965,12 +976,12 @@ Parameters:                                                                  Def
              file. If it is exceeded, the request is placed in a file,
              the name of which is passed to the script in the environment
              variable POST_FILENAME. Other generated environment variables -
-             SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS, REMOTE_ADDR. If
-             the form-... directive is missing from the request data, then
-             incoming data stream will be placed entirely in a file. This
-             feature can be used to transfer files to the server. In this
-             case, the file name will be in the environment variable
-             POST_FILENAME.
+             SERVER_PROTOCOL, SCRIPT_FILENAME, QUERY_STRING, HTTP_HEADERS,
+             REMOTE_ADDR. If the form-... directive is missing from the
+             request data, then incoming data stream will be placed entirely
+             in a file. This feature can be used to transfer files to the
+             server. In this case, the file name will be in the environment
+             variable POST_FILENAME.
      -proc   Script handler used. If necessary, you must also include            "+https.Proc+@"
              the full path to the executable file. By default, the component
              built into Microsoft Windows OS is used, a very fast script
