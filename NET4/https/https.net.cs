@@ -1,3 +1,7 @@
+/////////////////////////////////////////////////////////
+//   https.net сервер на C#.    Автор: A.Б.Корниенко   //
+/////////////////////////////////////////////////////////
+
 using System;
 using System.IO;
 using System.Web;
@@ -44,12 +48,12 @@ public class https{
       if(!File.Exists(CerFile)) CerFile="";
     }
     if(CerFile==""){
-      Console.WriteLine("The https-server cannot be started. Certificate was not found :(");
+      Console.WriteLine("The https.net server cannot be started. Certificate was not found :(");
     }else{
       try{
         Cert = new X509Certificate2(CerFile);
       }catch(Exception){
-        Console.WriteLine("The https-server cannot be started. Certificate error :((");
+        Console.WriteLine("The https.net server cannot be started. Certificate error :((");
         Cert = null;
       }
       if(Cert!=null){
@@ -78,7 +82,7 @@ public class https{
         i=0;    // Задание начального индекса для создания переменной jt в Session
         try{
           Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-          log2("\tThe https-server are waiting for input requests...");
+          log2("\tThe https.net server are waiting for input requests...");
         }catch(Exception){
           log2("\tThere were problems when creating threads. Try updating Windows.");
           notexit=false;
@@ -953,8 +957,8 @@ Parameters:                                                                  Def
              are supported, for example - index.html.gz or library.js.gz etc.
      -c      Name of the file containing the self-signed certificate for the     "+https.CerFile+@"
              Tls 1.2 protocol without a password. If path is not specified,
-             the certificate is searched in the https-server location folder
-             and in the root folder containing the domains.
+             the certificate is searched in the https.net server location
+             folder and in the root folder containing the domains.
      -p      Port that the server is listening on.                               "+https.port.ToString()+@"
      -b      Size of the read and write buffers.                                 "+https.bu.ToString()+@"
      -s      Number of requests being processed at the same time. Maximum        "+https.st.ToString()+@"
