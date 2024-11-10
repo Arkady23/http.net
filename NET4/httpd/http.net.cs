@@ -1,3 +1,7 @@
+/////////////////////////////////////////////////////////
+//   http.net сервер на C#.     Автор: A.Б.Корниенко   //
+/////////////////////////////////////////////////////////
+
 using System;
 using System.IO;
 using System.Web;
@@ -61,7 +65,7 @@ public class httpd{
     i=0;    // Задание начального индекса для создания переменной jt в Session
     try{
       Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-      log2("\tThe http-server are waiting for input requests...");
+      log2("\tThe http.net server are waiting for input requests...");
     }catch(Exception){
       log2("\tThere were problems when creating threads. Try updating Windows.");
       notexit=false;
