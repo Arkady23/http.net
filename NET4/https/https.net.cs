@@ -82,9 +82,9 @@ public class https{
         i=0;    // Задание начального индекса для создания переменной jt в Session
         try{
           Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-          log2("\tThe https.net server are waiting for input requests...");
+          log2("\t\tThe https.net server are waiting for input requests...");
         }catch(Exception){
-          log2("\tThere were problems when creating threads. Try updating Windows.");
+          log2("\t\tThere were problems when creating threads. Try updating Windows.");
           notexit=false;
         }
       }
@@ -128,13 +128,13 @@ public class https{
 
     // Записать в файл
     try{
-      Console.WriteLine(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+"\t"+x);
+      Console.WriteLine(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")+x);
       logSW.Flush();
       logFS.Flush();
     }catch(ObjectDisposedException){
       log9=0;
     }catch(Exception){
-      Thread.Sleep(23); log2(x+"");
+      Thread.Sleep(23); log2(x+" *");
     }
   }
 
@@ -226,14 +226,17 @@ class Session{
   }
 
   public async void Accept(Socket Server){
-    string dt1,Content_T;
+    DateTime dt1;
+    string Content_T;
     SslStream Stream = null;
     Socket Client = null;
     while (https.notexit){
       Client = await Server.AcceptAsync();
       IPEndPoint Point = Client.RemoteEndPoint as IPEndPoint;
       IP=Point.Address.ToString();
-      x1=IP+" "+jt+"\t";
+      dt1=DateTime.UtcNow;
+      x1=" "+IP+" "+jt+"\t";
+      res="";
       try{
         Stream = new SslStream(new NetworkStream(Client,true),false);
         Stream.AuthenticateAsServer(https.Cert,false,
@@ -246,7 +249,7 @@ class Session{
       }
       if(Stream != null){
         Content_T=https.CT_T;
-        dt1=DateTime.UtcNow.ToString("R");
+        dt1=DateTime.UtcNow;
         cont1=heads=head=h1=reso=Host=Content_Type=Content_Disposition=QUERY_STRING="";
         UTF = Encoding.GetEncoding(https.UTF8);
         Port=Point.Port.ToString();
@@ -276,9 +279,8 @@ class Session{
             R2=1;
           }
         }
-        https.log2(x1+res);
         if(R>0){
-          head="Date: "+dt1+"\r\n"+h1+Content_T;
+          head="Date: "+dt1.ToString("R")+"\r\n"+h1+Content_T;
           if(R>1){
             if(File.Exists(res)){
               x2=https.valStr(ref Content_Type,"charset");
@@ -311,14 +313,19 @@ class Session{
             }
           }
         }else{
-          await failure(Stream,"403 Forbidden");
+          if(res.Length>0){
+            res+=" -";
+            await failure(Stream,"403 Forbidden");
+          }
         }
         Stream.Close();
       }else{
-        https.log2(x1+"500 Internal Server Error");
+        res="500 Internal Server Error";
       }
       Client = null;
       Stream = null;
+      if(res.Length==0) res="400 Bad Request";
+      https.log2("/"+(DateTime.UtcNow-dt1).ToString("fff")+x1+res);
     }
   }
 
@@ -360,6 +367,7 @@ class Session{
                 ref string reso, ref string Host, ref string Content_Type,
                 ref string Content_Disposition, ref int Content_Length,
                 ref string heads){
+    int i;
     byte b=0;
     string lin=line1(UTF, ref bytes, ref cont1, ref k, ref b),n,h;
 
@@ -386,9 +394,16 @@ class Session{
         }
         heads+=lin+"\r\n";
       }else{
-        h=https.afterStr1(ref lin," ");
-        h=https.beforStr9(ref h," ");
-        reso=https.ltri(ref h);
+        i=lin.IndexOf(" ");
+        if(i>0){
+          n=lin.Substring(0,i);
+          if(n=="GET" || n=="POST" || n=="PUT"){
+            h=lin.Substring(i+1);
+            h=https.ltri(ref h);
+            i=h.IndexOf(" ");
+            if(i>0) reso=h.Substring(0,i);
+          }
+        }
       }
       lin=line1(UTF, ref bytes, ref cont1, ref k, ref b);
     }
@@ -398,7 +413,9 @@ class Session{
   static string prepResource(ref string reso, ref string QUERY_STRING, ref string Host,
                              ref byte R, ref byte R1, ref string h1, ref string Content_T){
     string sub,res="",ext=".";
-    if(reso.Length>0){
+    if(reso.Length==0){
+      R=0;
+    }else{
       res=HttpUtility.UrlDecode(reso);
       QUERY_STRING=https.afterStr1(ref res,"?");
       res=https.beforStr1(ref res,"?");
@@ -485,8 +502,6 @@ class Session{
       }
       reso=sub+res;
       res=https.DocumentRoot+reso;
-    }else{
-      R=0;
     }
     return res;
   }
@@ -519,10 +534,6 @@ class Session{
             await Stream.WriteAsync(bytes,0,i);
             i=0;
           }
-          bytes[i]=13;
-          i++;
-          bytes[i]=10;
-          i++;
         }
         await Stream.WriteAsync(bytes,0,i);
       }
@@ -940,7 +951,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.4.1, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.4.2, (C) a.kornienko.ru November 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
