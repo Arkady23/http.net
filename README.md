@@ -134,4 +134,4 @@ If there is an error in the prg file:
 2.5.4. October 2024. Caching of small files has been removed due to the lack of effect. Default read/write buffer size has been increased.  
 2.5.5-2.6.0. October-November 2024. Fixing the task stack overflow error.  
 2.6.1. November 2024. Default values have been changed for more stable server functioning. The SERVER_PROTOCOL environment variable has been added.  
-2.5.2. November 2024. Added syntactic control of the query method. The value of the response duration in ms has been added to the log, the symbol "-" when the server refuses to process the request, and some other changes in the log.  
+2.5.2-2.5.3. November 2024. Added syntactic control of the query method. The value of the response duration in ms has been added to the log, the symbol "-" when the server refuses to process the request, and some other changes in the log.  
