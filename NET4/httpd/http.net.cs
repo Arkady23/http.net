@@ -480,9 +480,7 @@ class Session{
 
   async Task failure(System.Net.Sockets.NetworkStream Stream, string z){
     byte[] bytes1=UTF.GetBytes(httpd.H1+z+"\r\n");
-    try{
-      await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(Exception){ }
+    await Stream.WriteAsync(bytes1,0,bytes1.Length);
   }
 
   async Task type(System.Net.Sockets.NetworkStream Stream){
@@ -498,13 +496,6 @@ class Session{
           i+=k;
           j=bytes.Length;
           k=0;
-        }
-        if(ts.Length==ts.Position){
-          // Добавляем в конец перенос строки
-          if(i+2>=bytes.Length){
-            await Stream.WriteAsync(bytes,0,i);
-            i=0;
-          }
         }
         await Stream.WriteAsync(bytes,0,i);
       }
@@ -643,10 +634,7 @@ value2
       }
       bytes1=UTF.GetBytes(head+cont1.Substring(i));
     }
-
-    try{
-      await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(Exception){ }
+    await Stream.WriteAsync(bytes1,0,bytes1.Length);
 
     Proc.WaitForExit();
     // Освободить ресурсы
@@ -796,9 +784,7 @@ value2
       bytes1=UTF.GetBytes(httpd.OK+head+httpd.CT_T+"\r\nAll "+httpd.db.ToString()+
              " VFP processes are busy");
     }
-    try{
-      await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(Exception){}
+    await Stream.WriteAsync(bytes1,0,bytes1.Length);
   }
 
 }
@@ -916,7 +902,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.6.2, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.6.3, (C) a.kornienko.ru November 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
