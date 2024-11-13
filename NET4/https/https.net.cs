@@ -508,9 +508,7 @@ class Session{
 
   async Task failure(SslStream Stream, string z){
     byte[] bytes1=UTF.GetBytes(https.H1+z+"\r\n");
-    try{
-      await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(Exception){ }
+    await Stream.WriteAsync(bytes1,0,bytes1.Length);
   }
 
 
@@ -527,13 +525,6 @@ class Session{
           i+=k;
           j=bytes.Length;
           k=0;
-        }
-        if(ts.Length==ts.Position){
-          // Добавляем в конец перенос строки
-          if(i+2>=bytes.Length){
-            await Stream.WriteAsync(bytes,0,i);
-            i=0;
-          }
         }
         await Stream.WriteAsync(bytes,0,i);
       }
@@ -672,10 +663,7 @@ value2
       }
       bytes1=UTF.GetBytes(head+cont1.Substring(i));
     }
-
-    try{
-      await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(Exception){ }
+    await Stream.WriteAsync(bytes1,0,bytes1.Length);
 
     Proc.WaitForExit();
     // Освободить ресурсы
@@ -825,9 +813,7 @@ value2
       bytes1=UTF.GetBytes(https.OK+head+https.CT_T+"\r\nAll "+https.db.ToString()+
              " VFP processes are busy");
     }
-    try{
-      await Stream.WriteAsync(bytes1,0,bytes1.Length);
-    }catch(Exception){ }
+    await Stream.WriteAsync(bytes1,0,bytes1.Length);
   }
 
 }
@@ -951,7 +937,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.4.2, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.4.3, (C) a.kornienko.ru November 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
