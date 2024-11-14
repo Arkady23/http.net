@@ -239,8 +239,11 @@ class Session{
       res="";
       try{
         Stream = new SslStream(new NetworkStream(Client,true),false);
-        Stream.AuthenticateAsServer(https.Cert,false,
-            System.Security.Authentication.SslProtocols.Tls12,false);
+        if (! Stream.AuthenticateAsServerAsync(https.Cert,false,
+            System.Security.Authentication.SslProtocols.Tls12,false).Wait(150)){
+          Stream.Close();
+          Stream = null;
+        }
       }catch(Exception){
         if(Stream != null){
           Stream.Close();
@@ -937,7 +940,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.4.3, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.4.4, (C) a.kornienko.ru November 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
