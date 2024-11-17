@@ -398,23 +398,21 @@ class Session{
         reso=httpd.afterStr9(ref res,"/");
         ext=httpd.afterStr9(ref reso,ext);
         if(ext.Length==0){
-          reso=httpd.DocumentRoot+sub+res;
-          if(Directory.Exists(reso)){
-            res+="/"+httpd.DirectoryIndex;
-            ext=httpd.afterStr9(ref httpd.DirectoryIndex,".");
-          }else{
-            R1=1;
-            reso+=".";
+          if(res.EndsWith("/")) res+=httpd.DirectoryIndex;
+          reso=httpd.afterStr9(ref res,"/");
+          ext=httpd.afterStr9(ref reso,ext);
+          if(ext.Length==0){
+            reso=httpd.DocumentRoot+sub+res+".";
             if(File.Exists(reso+httpd.Ext)){
               ext=httpd.Ext;
             }else if(File.Exists(reso+"prg")){
               ext="prg";
-            }else if(File.Exists(reso)){
-              ext="";
-            }else{
+            }else if(Directory.Exists(reso)){
+              res+="/"+httpd.DirectoryIndex;
+              ext=httpd.afterStr9(ref httpd.DirectoryIndex,".");
+            }else if(! File.Exists(reso)){
               ext="html";
             }
-            res+="."+ext;
           }
         }
       }
@@ -902,7 +900,7 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.6.4, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded http.net server version 2.6.5, (C) a.kornienko.ru November 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
