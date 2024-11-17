@@ -429,23 +429,16 @@ class Session{
         reso=https.afterStr9(ref res,"/");
         ext=https.afterStr9(ref reso,ext);
         if(ext.Length==0){
-          reso=https.DocumentRoot+sub+res;
-          if(Directory.Exists(reso)){
+          reso=https.DocumentRoot+sub+res+".";
+          if(File.Exists(reso+https.Ext)){
+            ext=https.Ext;
+          }else if(File.Exists(reso+"prg")){
+            ext="prg";
+          }else if(Directory.Exists(reso)){
             res+="/"+https.DirectoryIndex;
             ext=https.afterStr9(ref https.DirectoryIndex,".");
-          }else{
-            R1=1;
-            reso+=".";
-            if(File.Exists(reso+https.Ext)){
-              ext=https.Ext;
-            }else if(File.Exists(reso+"prg")){
-              ext="prg";
-            }else if(File.Exists(reso)){
-              ext="";
-            }else{
-              ext="html";
-            }
-            res+="."+ext;
+          }else if(! File.Exists(reso)){
+            ext="html";
           }
         }
       }
@@ -940,7 +933,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.4.4, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.4.5, (C) a.kornienko.ru November 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
