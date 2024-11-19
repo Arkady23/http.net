@@ -19,8 +19,9 @@ using System.Security.Cryptography.X509Certificates;
 public class https{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
-                      H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'";
-  public const string Protocol="https",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
+                      H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'",
+                      Protocol="https",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n",
+                      ver="version 0.4.7",verD="November 2024";
   public const  int i9=2147483647;
   public static int port=8443, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
                     logi=0, i, k, maxVFP;
@@ -82,7 +83,7 @@ public class https{
         i=0;    // Задание начального индекса для создания переменной jt в Session
         try{
           Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-          log2("\t\tThe https.net server are waiting for input requests...");
+          log2("\tThe https.net server "+ver+" are waiting for input requests...");
         }catch(Exception){
           log2("\t\tThere were problems when creating threads. Try updating Windows.");
           notexit=false;
@@ -435,6 +436,7 @@ class Session{
             res+="."+ext;
           }else if(File.Exists(reso+"prg")){
             ext="prg";
+            res+=".prg";
           }else if(Directory.Exists(reso)){
             res+="/"+https.DirectoryIndex;
             ext=https.afterStr9(ref https.DirectoryIndex,".");
@@ -935,7 +937,8 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.4.6, (C) a.kornienko.ru November 2024.
+        Console.WriteLine("Multithreaded https.net server "+
+             https.ver+", (C) a.kornienko.ru "+https.verD+@".
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
