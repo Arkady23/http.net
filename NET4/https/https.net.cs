@@ -432,6 +432,7 @@ class Session{
           reso=https.DocumentRoot+sub+res+".";
           if(File.Exists(reso+https.Ext)){
             ext=https.Ext;
+            res+="."+ext;
           }else if(File.Exists(reso+"prg")){
             ext="prg";
           }else if(Directory.Exists(reso)){
@@ -439,6 +440,7 @@ class Session{
             ext=https.afterStr9(ref https.DirectoryIndex,".");
           }else if(! File.Exists(reso)){
             ext="html";
+            res+="."+ext;
           }
         }
       }
@@ -933,7 +935,7 @@ class main{
         if(i < Args.Length) https.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded https.net server version 0.4.5, (C) a.kornienko.ru November 2024.
+        Console.WriteLine(@"Multithreaded https.net server version 0.4.6, (C) a.kornienko.ru November 2024.
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
