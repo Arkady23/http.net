@@ -17,8 +17,9 @@ using System.Collections.Generic;
 public class httpd{
   public const string CL="Content-Length",CT="Content-Type", CD="Content-Disposition",
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
-                      H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'";
-  public const string Protocol="http",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n";
+                      H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'",
+                      Protocol="http",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n",
+                      ver="version 2.6.7",verD="November 2024";
   public const  int i9=2147483647;
   public static int port=8080, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
                     logi=0, i, k, maxVFP;
@@ -65,7 +66,7 @@ public class httpd{
     i=0;    // Задание начального индекса для создания переменной jt в Session
     try{
       Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-      log2("\t\tThe http.net server are waiting for input requests...");
+      log2("\tThe http.net server "+ver+" are waiting for input requests...");
     }catch(Exception){
       log2("\t\tThere were problems when creating threads. Try updating Windows.");
       notexit=false;
@@ -408,6 +409,7 @@ class Session{
               res+="."+ext;
             }else if(File.Exists(reso+"prg")){
               ext="prg";
+              res+=".prg";
             }else if(Directory.Exists(reso)){
               res+="/"+httpd.DirectoryIndex;
               ext=httpd.afterStr9(ref httpd.DirectoryIndex,".");
@@ -902,7 +904,8 @@ class main{
         if(i < Args.Length) httpd.Ext=Args[i];
         break;
       default:
-        Console.WriteLine(@"Multithreaded http.net server version 2.6.6, (C) a.kornienko.ru November 2024.
+        Console.WriteLine("Multithreaded http.net server "+
+             httpd.ver+", (C) a.kornienko.ru "+httpd.verD+@".
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
