@@ -21,7 +21,7 @@ public class https{
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
                       H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'",
                       Protocol="https",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n",
-                      ver="version 0.4.7",verD="November 2024";
+                      ver="version 0.4.8",verD="November 2024";
   public const  int i9=2147483647;
   public static int port=8443, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
                     logi=0, i, k, maxVFP;
@@ -286,7 +286,7 @@ class Session{
         if(R>0){
           head="Date: "+dt1.ToString("R")+"\r\n"+h1+Content_T;
           if(R>1){
-            if(File.Exists(res)){
+            if(R1>0 || File.Exists(res)){
               x2=https.valStr(ref Content_Type,"charset");
               if(x2.Length>0 && !String.Equals(x1,https.UTF8,StringComparison.CurrentCultureIgnoreCase)){
                 try{ UTF = Encoding.GetEncoding(x2); }catch(Exception){ }
@@ -432,11 +432,12 @@ class Session{
         if(ext.Length==0){
           reso=https.DocumentRoot+sub+res+".";
           if(File.Exists(reso+https.Ext)){
+            R1=1;      // Случай API
             ext=https.Ext;
             res+="."+ext;
           }else if(File.Exists(reso+"prg")){
+            R1=1;      // Случай API
             ext="prg";
-            res+=".prg";
           }else if(Directory.Exists(reso)){
             res+="/"+https.DirectoryIndex;
             ext=https.afterStr9(ref https.DirectoryIndex,".");
@@ -778,8 +779,8 @@ value2
         if(R1==0){
           bytes1=https.vfpw.GetBytes(https.OK+head+https.vfp[j].
                             Eval(https.beforStr9(ref prg,".prg")+"()"));
-        }else{
-          cont1=https.vfp[j].Eval(https.beforStr9(ref prg,".prg")+"()");
+        }else{      // Случай API
+          cont1=https.vfp[j].Eval(prg+"()");
           R1=(byte)cont1[0];
           if (R1>53||R1<49){
             head=https.OK+head;
