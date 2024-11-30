@@ -14,6 +14,7 @@ using System.Net.Security;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 
 public class https{
@@ -21,8 +22,8 @@ public class https{
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
                       H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'",
                       Protocol="https",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n",
-                      ver="version 0.4.8",verD="November 2024";
-  public const  int i9=2147483647;
+                      ver="version 0.4.9",verD="November 2024";
+  public const  int i9=2147483647,t9=10000;
   public static int port=8443, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
                     logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
@@ -42,6 +43,11 @@ public class https{
   Socket Server = null;
   Session[] Session = null;
   
+  // https://stackoverflow.com/questions/1579074/redirect-stdoutstderr-on-a-c-sharp-windows-service
+  // Для перевода ошибок в файл работает только эта сишная функция:
+  [DllImport("Kernel32.dll", SetLastError = true)]
+  internal static extern int SetStdHandle(int device, IntPtr handle); 
+
   public void RunServer(){
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     if(!File.Exists(CerFile)){
@@ -117,14 +123,22 @@ public class https{
     }
 
     if(!(logFS!=null)){
-      // Отправка вывода на консоль в файл:
-      logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
-      logFS = new FileStream(logZ,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
+      // Сохранить старые назначения:
       TW = Console.Out;
       TE = Console.Error;
+
+      // Все ошибки отправлять в некешируемый файл http.net.err.log
+      logFS = new FileStream("http.net.err.log",FileMode.Append);
+      logSW = new StreamWriter(logFS);
+      logSW.AutoFlush = true;
+      Console.SetError(logSW);
+      var status = SetStdHandle(-12, logFS.SafeFileHandle.DangerousGetHandle());
+
+      // Отправка стандартного вывода на консоль в чередующиеся кешируемые файлы:
+      logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
+      logFS = new FileStream(logZ,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
       logSW = new StreamWriter(logFS);
       Console.SetOut(logSW);
-      Console.SetError(logSW);
     }
 
     // Записать в файл
@@ -227,7 +241,9 @@ class Session{
   }
 
   public async void Accept(Socket Server){
+    Task<int> ti;
     DateTime dt1;
+    double n;
     string Content_T;
     SslStream Stream = null;
     Socket Client = null;
@@ -241,7 +257,7 @@ class Session{
       try{
         Stream = new SslStream(new NetworkStream(Client,true),false);
         if (! Stream.AuthenticateAsServerAsync(https.Cert,false,
-            System.Security.Authentication.SslProtocols.Tls12,false).Wait(150)){
+            System.Security.Authentication.SslProtocols.Tls12,false).Wait(200)){
           Stream.Close();
           Stream = null;
         }
@@ -267,7 +283,8 @@ class Session{
             k=0;
           }
           try{
-            i = await Stream.ReadAsync(bytes, 0, bytes.Length);
+            ti = Stream.ReadAsync(bytes, 0, bytes.Length);
+            i = ti.Wait(https.t9)? await ti : -1;
           }catch(Exception){
             i = -1;
           }
@@ -329,7 +346,8 @@ class Session{
       Client = null;
       Stream = null;
       if(res.Length==0) res="400 Bad Request";
-      https.log2("/"+(DateTime.UtcNow-dt1).ToString("fff")+x1+res);
+      n=DateTime.UtcNow.Subtract(dt1).TotalMilliseconds;
+      https.log2("/"+(n>9999?"****":n.ToString("0000"))+x1+res);
     }
   }
 
@@ -512,7 +530,6 @@ class Session{
     await Stream.WriteAsync(bytes1,0,bytes1.Length);
   }
 
-
   async Task type(SslStream Stream){
     // Отправка файла
     int i,j,k;
@@ -535,6 +552,7 @@ class Session{
 
   async Task send_wsf(SslStream Stream){
     int N=0;
+    Task<int> ti;
     byte[] bytes1;
     string dirname="", filename="";
     var wsf = new ProcessStartInfo();
@@ -574,7 +592,12 @@ class Session{
       }else{
         k=0;
         try{
-          i = await Stream.ReadAsync(bytes,k,bytes.Length);
+          ti = Stream.ReadAsync(bytes,k,bytes.Length);
+          if(ti.Wait(https.t9)){
+            i= await ti;
+          }else{
+            N=Content_Length;
+          }
         }catch(Exception){
           N=Content_Length;
         }
@@ -634,7 +657,12 @@ value2
           if(R2==0){
             if (ft != null) await ft;
             try{
-              i = await Stream.ReadAsync(bytes,0,bytes.Length);
+              ti = Stream.ReadAsync(bytes,0,bytes.Length);
+              if(ti.Wait(https.t9)){
+                i= await ti;
+              }else{
+                N=Content_Length;
+              }
             }catch(Exception){
               N=Content_Length;
             }
@@ -672,6 +700,7 @@ value2
   }
 
   async Task send_prg(SslStream Stream){
+    Task<int> ti;
     int j=-1, N=0;
     byte[] bytes1;
     string fullprg=https.fullres(ref res),prg=https.afterStr9(ref res,"/"),
@@ -711,7 +740,7 @@ value2
       }
       https.vfp[j].DoCmd("on erro ERROR_MESS='ERROR: '+MESSAGE()+' IN: '+MESSAGE(1)");
       https.vfp[j].DoCmd("SET DEFA TO (\""+https.beforStr9(ref fullprg,"/")+"\")");
-      https.vfp[j].SetVar("POST_FILENAME",filename.Length>0?https.Folder+"/"+filename:"");
+      https.vfp[j].SetVar("POST_FILENAME",filename.Length>0?https.Folder+filename:"");
       https.vfp[j].SetVar("SERVER_PROTOCOL",https.Protocol);
       https.vfp[j].SetVar("QUERY_STRING",QUERY_STRING);
       https.vfp[j].SetVar("SCRIPT_FILENAME",fullprg);
@@ -727,7 +756,12 @@ value2
         }else{
           k=0;
           try{
-            i = await Stream.ReadAsync(bytes,k,bytes.Length);
+            ti = Stream.ReadAsync(bytes,k,bytes.Length);
+            if(ti.Wait(https.t9)){
+              i= await ti;
+            }else{
+              N=Content_Length;
+            }
           }catch(Exception){
             N=Content_Length;
           }
@@ -762,7 +796,12 @@ value2
             if(R2==0){
               if (ft != null) await ft;
               try{
-                i = await Stream.ReadAsync(bytes,0,bytes.Length);
+                ti = Stream.ReadAsync(bytes,0,bytes.Length);
+                if(ti.Wait(https.t9)){
+                  i= await ti;
+                }else{
+                  N=Content_Length;
+                }
               }catch(Exception){
                 N=Content_Length;
               }
@@ -823,8 +862,7 @@ class main{
   public static https https = null;
 
   static void Main(string[] Args){
-    string Folder=System.IO.Path.GetDirectoryName(
-           System.Reflection.Assembly.GetEntryAssembly().Location);
+    string Folder=Thread.GetDomain().BaseDirectory;
     Directory.SetCurrentDirectory(Folder);
     https = new https();
     https.Folder=Folder;
