@@ -127,8 +127,8 @@ public class https{
       TW = Console.Out;
       TE = Console.Error;
 
-      // Все ошибки отправлять в некешируемый файл http.net.err.log
-      logFS = new FileStream("http.net.err.log",FileMode.Append);
+      // Все ошибки отправлять в некешируемый файл https.net.err.log
+      logFS = new FileStream("https.net.err.log",FileMode.Append);
       logSW = new StreamWriter(logFS);
       logSW.AutoFlush = true;
       Console.SetError(logSW);
@@ -1006,7 +1006,7 @@ Parameters:                                                                  Def
              needed by simultaneous client requests to the set value. Maximum
              value is 1000.
      -log    Size of the query log in rows. The log consists of two              "+https.log9.ToString()+@"
-             interleaved versions http.net.x.log and http.net.y.log. If the
+             interleaved versions https.net.x.log and https.net.y.log. If the
              size is set to less than "+log1.ToString()+@", then the log is not kept.
      -post   Maximum size of the accepted request to transfer to the script      "+https.post.ToString()+@"
              file. If it is exceeded, the request is placed in a file,
