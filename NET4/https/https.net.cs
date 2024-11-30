@@ -22,7 +22,7 @@ public class https{
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
                       H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'",
                       Protocol="https",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n",
-                      ver="version 0.4.9",verD="November 2024";
+                      ver="version 0.4.10",verD="November 2024";
   public const  int i9=2147483647,t9=10000;
   public static int port=8443, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
                     logi=0, i, k, maxVFP;
@@ -117,7 +117,10 @@ public class https{
     // Нужно ли начать запись с начала журнала?
     if(logi>=log9 && logFS!=null){
       Interlocked.Exchange(ref logi,1);
-      logFS.Seek(0,SeekOrigin.Begin);
+      logZ = (logY==logZ)? logX:logY;
+      logSW.Close();
+      logFS.Close();
+      log1();
     }else{
       Interlocked.Increment(ref logi);
     }
@@ -136,9 +139,7 @@ public class https{
 
       // Отправка стандартного вывода на консоль в чередующиеся кешируемые файлы:
       logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
-      logFS = new FileStream(logZ,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
-      logSW = new StreamWriter(logFS);
-      Console.SetOut(logSW);
+      log1();
     }
 
     // Записать в файл
@@ -151,6 +152,12 @@ public class https{
     }catch(Exception){
       Thread.Sleep(23); log2(x+" *");
     }
+  }
+
+  internal static void log1(){
+    logFS = new FileStream(logZ,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
+    logSW = new StreamWriter(logFS);
+    Console.SetOut(logSW);
   }
 
   public static void log2(string x){
