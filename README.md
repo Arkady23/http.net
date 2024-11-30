@@ -139,3 +139,4 @@ If there is an error in the prg file:
 2.6.5-2.6.6. November 2024. If the file name with the default extension matches the existing directory name, then the request is now considered for an existing file..  
 2.6.7. November 2024. Information about the server version has been added to the log.  
 2.6.8. November 2024. Fixed a bug for the API variant.  
+2.6.9. November 2024. It is set to cancel the request if the client, having established a connection, does not start sending headers within 10 seconds. Such requests could block the server. If execution error occurs, the message is now sent to the http.net.err.log file.  
