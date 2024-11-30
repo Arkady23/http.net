@@ -140,3 +140,4 @@ If there is an error in the prg file:
 2.6.7. November 2024. Information about the server version has been added to the log.  
 2.6.8. November 2024. Fixed a bug for the API variant.  
 2.6.9. November 2024. It is set to cancel the request if the client, having established a connection, does not start sending headers within 10 seconds. Such requests could block the server. If execution error occurs, the message is now sent to the http.net.err.log file.  
+2.6.10. November 2024. The logs are switched between each other when one of them is filled up to a set number of lines.  
