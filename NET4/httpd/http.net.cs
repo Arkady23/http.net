@@ -20,14 +20,14 @@ public class httpd{
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
                       H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'",
                       Protocol="http",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n",
-                      ver="version 2.6.10",verD="November 2024";
-  public const  int i9=2147483647,t9=10000;
+                      logX="http.net.x.log", logY="http.net.y.log",
+                      ver="version 2.7.0",verD="December 2024";
+  public const  int i9=2147483647;
   public static int port=8080, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
-                    logi=0, i, k, maxVFP;
-  public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
-                       Proc="cscript.exe", Args="", Ext="wsf",
-                       logX="http.net.x.log", logY="http.net.y.log", logZ="",
-                       DirectorySessions="Sessions";
+                    tw=10000, logi=0, i, k, maxVFP;
+  public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI, logZ="", Args="",
+                       Proc="cscript.exe", Ext="wsf", DirectorySessions="Sessions";
+                       
   public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
   public static StreamWriter logSW = null;
   public static FileStream logFS = null;
@@ -40,11 +40,6 @@ public class httpd{
   Socket Server = null;
   Session[] Session = null;
 
-  // https://stackoverflow.com/questions/1579074/redirect-stdoutstderr-on-a-c-sharp-windows-service
-  // Для перевода ошибок в файл работает только эта сишная функция:
-  [DllImport("Kernel32.dll", SetLastError = true)]
-  internal static extern int SetStdHandle(int device, IntPtr handle); 
-  
   public void RunServer(){
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     Server = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
@@ -52,30 +47,40 @@ public class httpd{
     IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
     vfp = new dynamic[db];
     vfpb = new byte[db];
-    Server.Bind(ep);
-    Server.Listen(qu);
-    if(vfpa!=null){
-      try{
-        vfp[0] = Activator.CreateInstance(vfpa);
-      }catch(Exception){
-        vfpa = null;
-      }
-      if(vfpa!=null){
-        vfpb[0]=1;
-        maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
-        vfpw=Encoding.GetEncoding(vfp[0].Eval("CPCURRENT()"));
-        VFPclr=vfp[0].Eval("file("+CLR+")");
-      }
-    }
-    i= st<8?8:st;
-    ThreadPool.SetMinThreads(i,i);
-    i=0;    // Задание начального индекса для создания переменной jt в Session
+
+    // Проверим на случай, если уже запущен экземпляр сервера:
     try{
-      Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-      log2("\tThe http.net server "+ver+" are waiting for input requests...");
+      Server.Bind(ep);
     }catch(Exception){
-      log2("\t\tThere were problems when creating threads. Try updating Windows.");
+      // Запущен втоой экземпляр сервра на одном порту
       notexit=false;
+    }
+
+    if(notexit==true){
+      Server.Listen(qu);
+      if(vfpa!=null){
+        try{
+          vfp[0] = Activator.CreateInstance(vfpa);
+        }catch(Exception){
+          vfpa = null;
+        }
+        if(vfpa!=null){
+          vfpb[0]=1;
+          maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
+          vfpw=Encoding.GetEncoding(vfp[0].Eval("CPCURRENT()"));
+          VFPclr=vfp[0].Eval("file("+CLR+")");
+        }
+      }
+      i= st<8?8:st;
+      ThreadPool.SetMinThreads(i,i);
+      i=0;    // Задание начального индекса для создания переменной jt в Session
+      try{
+        Parallel.For(0,st,j => { Session[j] = new Session(Server); });
+        log2("\tThe http.net server "+ver+" are waiting for input requests...");
+      }catch(Exception){
+        log2("\t\tThere were problems when creating threads. Try updating Windows.");
+        notexit=false;
+      }
     }
   }
 
@@ -111,13 +116,6 @@ public class httpd{
       TW = Console.Out;
       TE = Console.Error;
 
-      // Все ошибки отправлять в некешируемый файл http.net.err.log
-      logFS = new FileStream("http.net.err.log",FileMode.Append);
-      logSW = new StreamWriter(logFS);
-      logSW.AutoFlush = true;
-      Console.SetError(logSW);
-      var status = SetStdHandle(-12, logFS.SafeFileHandle.DangerousGetHandle());
-
       // Отправка стандартного вывода на консоль в чередующиеся кешируемые файлы:
       logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
       log1();
@@ -136,9 +134,10 @@ public class httpd{
   }
 
   internal static void log1(){
-    logFS = new FileStream(logZ,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
-    logSW = new StreamWriter(logFS);
-    Console.SetOut(logSW);
+      logFS = new FileStream(logZ,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
+      logSW = new StreamWriter(logFS);
+      Console.SetError(logSW);
+      Console.SetOut(logSW);
   }
 
   public static void log2(string x){
@@ -260,7 +259,7 @@ class Session{
           }
           try{
             ti = Stream.ReadAsync(bytes, 0, bytes.Length);
-            i = ti.Wait(httpd.t9)? await ti : -1;
+            i = ti.Wait(httpd.tw)? await ti : -1;
           }catch(Exception){
             i = -1;
           }
@@ -321,7 +320,7 @@ class Session{
       }
       Client = null;
       Stream = null;
-      if(res.Length==0) res="400 Bad Request";
+      if(res.Length==0) res="-";
       n=DateTime.UtcNow.Subtract(dt1).TotalMilliseconds;
       httpd.log2("/"+(n>9999?"****":n.ToString("0000"))+x1+res);
     }
@@ -569,7 +568,7 @@ class Session{
         k=0;
         try{
           ti = Stream.ReadAsync(bytes,k,bytes.Length);
-          if(ti.Wait(httpd.t9)){
+          if(ti.Wait(httpd.tw)){
             i = await ti;
           }else{
             N=Content_Length;
@@ -634,7 +633,7 @@ value2
             if (ft != null) await ft;
             try{
               ti = Stream.ReadAsync(bytes,0,bytes.Length);
-              if(ti.Wait(httpd.t9)){
+              if(ti.Wait(httpd.tw)){
                 i = await ti;
               }else{
                 N=Content_Length;
@@ -733,7 +732,7 @@ value2
           k=0;
           try{
             ti = Stream.ReadAsync(bytes,k,bytes.Length);
-            if(ti.Wait(httpd.t9)){
+            if(ti.Wait(httpd.tw)){
               i = await ti;
             }else{
               N=Content_Length;
@@ -773,7 +772,7 @@ value2
               if (ft != null) await ft;
               try{
                 ti = Stream.ReadAsync(bytes,0,bytes.Length);
-                if(ti.Wait(httpd.t9)){
+                if(ti.Wait(httpd.tw)){
                   i = await ti;
                 }else{
                   N=Content_Length;
@@ -851,23 +850,37 @@ class main{
       }
       httpd.RunServer();
       if(httpd.notexit){
-        AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
-        Console.TreatControlCAsInput=true;
-        Console.ReadKey(true);
+
+        // Перехват ошибок и запись их в журнал
+        AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
+        {
+          httpd.log2(" "+((Exception)eventArgs.ExceptionObject).ToString());
+          httpd.StopServer();
+        };
+
+        // Считывание клавиши Esc для выхода
+        ConsoleKeyInfo cki;
+        Console.WriteLine("Press Esc to exit.");
+        do { cki = Console.ReadKey(true); } while (cki.Key != ConsoleKey.Escape);
         httpd.StopServer();
+        Console.WriteLine("Server stoped :(((");
       }
-      Console.WriteLine("Server stoped :(((");
     }
   }
 
-  static void CurrentDomain_ProcessExit(object sender, EventArgs e){
-    // аварийное завершение или выключение ПК
-    httpd.StopServer();
-  }
-
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, db9=1000, p9=65535, q9=2147483647, s9=1000, post9=33554432, log1=80;
+    int b9=131072, db9=500, p9=65535, q9=2147483647, s9=1000, t9=20, post9=33554432, log1=80,
+        i, k;
     bool l=true;
+    if(Args.Length>0){
+      if((byte)Args[0][0]==64){
+        string fn=Args[0].Substring(1).Trim();
+        if(File.Exists(fn))
+           Args = File.ReadAllText(fn).Replace("\t", " ").Replace("\r",string.Empty).
+                  Replace("\n",string.Empty).Trim().Split();
+      }
+    }
+
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
       switch (Args[i]){
@@ -903,6 +916,13 @@ class main{
           httpd.st=(k > 0 && k <= s9)? k : s9;
         }            
         break;
+        case "-w":
+          i++;
+          if(i < Args.Length){
+            k=httpd.valInt(Args[i]);
+            httpd.tw=((k > 0 && k <= t9)? k : t9)*1000;
+          }            
+          break;
       case "-db":
         i++;
         if(i < Args.Length){
@@ -951,9 +971,11 @@ class main{
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
+    http.net @filename
 
     If necessary, Parameter and Value pairs are specified. If the value is text and contains
-    spaces, then it must be enclosed in quotation marks.
+    spaces, then it must be enclosed in quotation marks. You can specify @filename which
+    contains the entire line with parameters.
 
 Parameters:                                                                  Default values:
      -d      Folder containing the domains.                                      "+httpd.DocumentRoot+@"
@@ -967,6 +989,8 @@ Parameters:                                                                  Def
      -s      Number of requests being processed at the same time. Maximum        "+httpd.st.ToString()+@"
              value is 1000.
      -q      Number requests stored in the queue.                                "+httpd.qu.ToString()+@"
+     -w      Allowed time to reserve an open channel for request that did not    "+httpd.tw.ToString()+@"
+             started. From 1 to 20 seconds.
      -db     Maximum number of dynamically running MS VFP DBMS instances.        "+httpd.db.ToString()+@"
              Extending scripts to run VFP - prg. Processes are started as
              needed by simultaneous client requests to the set value. Maximum
