@@ -869,7 +869,7 @@ class main{
   }
 
   static bool getArgs(String[] Args){
-    int b9=131072, db9=500, p9=65535, q9=2147483647, s9=1000, t9=20, post9=33554432, log1=80,
+    int b9=131072, db9=1000, p9=65535, q9=2147483647, s9=1000, t9=20, post9=33554432, log1=80,
         i, k;
     bool l=true;
     if(Args.Length>0){
@@ -989,7 +989,7 @@ Parameters:                                                                  Def
      -s      Number of requests being processed at the same time. Maximum        "+httpd.st.ToString()+@"
              value is 1000.
      -q      Number requests stored in the queue.                                "+httpd.qu.ToString()+@"
-     -w      Allowed time to reserve an open channel for request that did not    "+httpd.tw.ToString()+@"
+     -w      Allowed time to reserve an open channel for request that did not    "+(httpd.tw/1000).ToString()+@"
              started. From 1 to 20 seconds.
      -db     Maximum number of dynamically running MS VFP DBMS instances.        "+httpd.db.ToString()+@"
              Extending scripts to run VFP - prg. Processes are started as
