@@ -9,13 +9,15 @@ The number of threads should not be set immediately to the maximum possible. If 
 Processing of wsf scripts with a handler is provided cscript.exe. In the http server parameters, you can replace this script extension and handler with any other one. It also provides processing of prg scripts via COM MS technology with VFP 9/10(Advanced) DBMS, not CGI. COM objects are created as requests from simultaneously accessing clients are made to the maximum value specified in the server parameters. By default, the visual error output of the VFP 9/10(Advanced) DBMS is disabled. In case of an error in the prg, the description of this error is returned to the script in the ERROR_MESS variable. Below is an example of a prg file and the result of its work. And also the result of a similar prg file, but with an error (the last line break ";" is missing).
 ```
 PS D:\> D:\work\httpd\http.net.exe /?
-Multithreaded http.net server version 2.6.10, (C) a.kornienko.ru November 2024.
+Multithreaded http.net server version 2.7.0, (C) a.kornienko.ru December 2024.
 
 USAGE:
     http.net [Parameter1 Value1] [Parameter2 Value2] ...
+    http.net @filename
 
     If necessary, Parameter and Value pairs are specified. If the value is text and contains
-    spaces, then it must be enclosed in quotation marks.
+    spaces, then it must be enclosed in quotation marks. You can specify @filename which
+    contains the entire line with parameters.
 
 Parameters:                                                                  Default values:
      -d      Folder containing the domains.                                      ../www/
@@ -29,6 +31,8 @@ Parameters:                                                                  Def
      -s      Number of requests being processed at the same time. Maximum        20
              value is 1000.
      -q      Number requests stored in the queue.                                600
+     -w      Allowed time to reserve an open channel for request that did not    10000
+             started. From 1 to 20 seconds.
      -db     Maximum number of dynamically running MS VFP DBMS instances.        20
              Extending scripts to run VFP - prg. Processes are started as
              needed by simultaneous client requests to the set value. Maximum
