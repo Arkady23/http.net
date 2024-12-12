@@ -22,13 +22,13 @@ public class https{
                       CC="Cache-Control: public, max-age=2300000\r\n",DI="index.html",
                       H1="HTTP/1.1 ",UTF8="UTF-8",CLR="sys(2004)+'VFPclear.prg'",
                       Protocol="https",OK=H1+"200 OK\r\n",CT_T=CT+": text/plain\r\n",
-                      ver="version 0.4.10",verD="November 2024";
-  public const  int i9=2147483647,t9=10000;
+                      logX="https.net.x.log", logY="https.net.y.log",
+                      ver="version 0.5.0",verD="December 2024";
+  public const  int i9=2147483647;
   public static int port=8443, st=20, qu=600, bu=32768, db=20, log9=10000, post=33554432,
-                    logi=0, i, k, maxVFP;
+                    tw=10000, logi=0, i, k, maxVFP;
   public static string DocumentRoot="../www/", Folder, DirectoryIndex=DI,
-                       Proc="cscript.exe", Args="", Ext="wsf",
-                       logX="https.net.x.log", logY="https.net.y.log", logZ="",
+                       Proc="cscript.exe", Ext="wsf", Args="", logZ="",
                        DirectorySessions="Sessions", CerFile="a.kornienko.ru.pfx";
   public static Type vfpa = Type.GetTypeFromProgID("VisualFoxPro.Application");
   public static X509Certificate2 Cert = null;
@@ -43,11 +43,6 @@ public class https{
   Socket Server = null;
   Session[] Session = null;
   
-  // https://stackoverflow.com/questions/1579074/redirect-stdoutstderr-on-a-c-sharp-windows-service
-  // Для перевода ошибок в файл работает только эта сишная функция:
-  [DllImport("Kernel32.dll", SetLastError = true)]
-  internal static extern int SetStdHandle(int device, IntPtr handle); 
-
   public void RunServer(){
     if(Directory.Exists(DirectorySessions)) Directory.Delete(DirectorySessions,true);
     if(!File.Exists(CerFile)){
@@ -69,30 +64,40 @@ public class https{
         IPEndPoint ep = new IPEndPoint(IPAddress.Any, port);
         vfp = new dynamic[db];
         vfpb = new byte[db];
-        Server.Bind(ep);
-        Server.Listen(qu);
-        if(vfpa!=null){
-          try{
-            vfp[0] = Activator.CreateInstance(vfpa);
-          }catch(Exception){
-            vfpa = null;
-          }
-          if(vfpa!=null){
-            vfpb[0]=1;
-            maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
-            vfpw=Encoding.GetEncoding(vfp[0].Eval("CPCURRENT()"));
-            VFPclr=vfp[0].Eval("file("+CLR+")");
-          }
-        }
-        i= st<8?8:st;
-        ThreadPool.SetMinThreads(i,i);
-        i=0;    // Задание начального индекса для создания переменной jt в Session
+
+        // Проверим на случай, если уже запущен экземпляр сервера:
         try{
-          Parallel.For(0,st,j => { Session[j] = new Session(Server); });
-          log2("\tThe https.net server "+ver+" are waiting for input requests...");
+          Server.Bind(ep);
         }catch(Exception){
-          log2("\t\tThere were problems when creating threads. Try updating Windows.");
+          // Запущен втоой экземпляр сервра на одном порту
           notexit=false;
+        }
+
+        if(notexit==true){
+          Server.Listen(qu);
+          if(vfpa!=null){
+            try{
+              vfp[0] = Activator.CreateInstance(vfpa);
+            }catch(Exception){
+              vfpa = null;
+            }
+            if(vfpa!=null){
+              vfpb[0]=1;
+              maxVFP=(vfp[0].Eval("sys(17)")=="Pentium")? 16777184 : 67108832;
+              vfpw=Encoding.GetEncoding(vfp[0].Eval("CPCURRENT()"));
+              VFPclr=vfp[0].Eval("file("+CLR+")");
+            }
+          }
+          i= st<8?8:st;
+          ThreadPool.SetMinThreads(i,i);
+          i=0;    // Задание начального индекса для создания переменной jt в Session
+          try{
+            Parallel.For(0,st,j => { Session[j] = new Session(Server); });
+            log2("\tThe https.net server "+ver+" are waiting for input requests...");
+          }catch(Exception){
+            log2("\t\tThere were problems when creating threads. Try updating Windows.");
+            notexit=false;
+          }
         }
       }
     }
@@ -130,13 +135,6 @@ public class https{
       TW = Console.Out;
       TE = Console.Error;
 
-      // Все ошибки отправлять в некешируемый файл https.net.err.log
-      logFS = new FileStream("https.net.err.log",FileMode.Append);
-      logSW = new StreamWriter(logFS);
-      logSW.AutoFlush = true;
-      Console.SetError(logSW);
-      var status = SetStdHandle(-12, logFS.SafeFileHandle.DangerousGetHandle());
-
       // Отправка стандартного вывода на консоль в чередующиеся кешируемые файлы:
       logZ=(File.GetLastWriteTime(logX)<=File.GetLastWriteTime(logY))? logX : logY;
       log1();
@@ -157,6 +155,7 @@ public class https{
   internal static void log1(){
     logFS = new FileStream(logZ,FileMode.Create,FileAccess.Write,FileShare.ReadWrite);
     logSW = new StreamWriter(logFS);
+    Console.SetError(logSW);
     Console.SetOut(logSW);
   }
 
@@ -291,7 +290,7 @@ class Session{
           }
           try{
             ti = Stream.ReadAsync(bytes, 0, bytes.Length);
-            i = ti.Wait(https.t9)? await ti : -1;
+            i = ti.Wait(https.tw)? await ti : -1;
           }catch(Exception){
             i = -1;
           }
@@ -352,7 +351,7 @@ class Session{
       }
       Client = null;
       Stream = null;
-      if(res.Length==0) res="400 Bad Request";
+      if(res.Length==0) res="-";
       n=DateTime.UtcNow.Subtract(dt1).TotalMilliseconds;
       https.log2("/"+(n>9999?"****":n.ToString("0000"))+x1+res);
     }
@@ -600,7 +599,7 @@ class Session{
         k=0;
         try{
           ti = Stream.ReadAsync(bytes,k,bytes.Length);
-          if(ti.Wait(https.t9)){
+          if(ti.Wait(https.tw)){
             i= await ti;
           }else{
             N=Content_Length;
@@ -665,7 +664,7 @@ value2
             if (ft != null) await ft;
             try{
               ti = Stream.ReadAsync(bytes,0,bytes.Length);
-              if(ti.Wait(https.t9)){
+              if(ti.Wait(https.tw)){
                 i= await ti;
               }else{
                 N=Content_Length;
@@ -764,7 +763,7 @@ value2
           k=0;
           try{
             ti = Stream.ReadAsync(bytes,k,bytes.Length);
-            if(ti.Wait(https.t9)){
+            if(ti.Wait(https.tw)){
               i= await ti;
             }else{
               N=Content_Length;
@@ -804,7 +803,7 @@ value2
               if (ft != null) await ft;
               try{
                 ti = Stream.ReadAsync(bytes,0,bytes.Length);
-                if(ti.Wait(https.t9)){
+                if(ti.Wait(https.tw)){
                   i= await ti;
                 }else{
                   N=Content_Length;
@@ -883,24 +882,38 @@ class main{
       https.RunServer();
       if(https.Cert!=null){
         if(https.notexit){
-          AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
-          Console.TreatControlCAsInput=true;
-          Console.ReadKey(true);
+
+          // Перехват ошибок и запись их в журнал
+          AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
+          {
+            https.log2(" "+((Exception)eventArgs.ExceptionObject).ToString());
+            https.StopServer();
+          };
+
+          // Считывание клавиши Esc для выхода
+          ConsoleKeyInfo cki;
+          Console.WriteLine("Press Esc to exit.");
+          do { cki = Console.ReadKey(true); } while (cki.Key != ConsoleKey.Escape);
           https.StopServer();
+          Console.WriteLine("Server stoped :(((");
         }
-        Console.WriteLine("Server stoped :(((");
       }
     }
   }
 
-  static void CurrentDomain_ProcessExit(object sender, EventArgs e){
-    // аварийное завершение или выключение ПК
-    https.StopServer();
-  }
-
   static bool getArgs(String[] Args){
-    int i, k, b9=131072, db9=50, p9=65535, q9=2147483647, s9=50, post9=33554432, log1=80;
+    int b9=131072, db9=500, p9=65535, q9=2147483647, s9=1000, t9=20, post9=33554432, log1=80,
+        i, k;
     bool l=true;
+    if(Args.Length>0){
+      if((byte)Args[0][0]==64){
+        string fn=Args[0].Substring(1).Trim();
+        if(File.Exists(fn))
+           Args = File.ReadAllText(fn).Replace("\t", " ").Replace("\r",string.Empty).
+                  Replace("\n",string.Empty).Trim().Split();
+      }
+    }
+
     // Разбор параметров
     for (i = 0; i < Args.Length; i++){
       switch (Args[i]){
@@ -936,6 +949,13 @@ class main{
           https.st=(k > 0 && k <= s9)? k : s9;
         }            
         break;
+        case "-w":
+          i++;
+          if(i < Args.Length){
+            k=https.valInt(Args[i]);
+            https.tw=((k > 0 && k <= t9)? k : t9)*1000;
+          }            
+          break;
       case "-db":
         i++;
         if(i < Args.Length){
@@ -988,9 +1008,11 @@ class main{
 
 USAGE:
     https.net [Parameter1 Value1] [Parameter2 Value2] ...
+    https.net @filename
 
     If necessary, Parameter and Value pairs are specified. If the value is text and contains
-    spaces, then it must be enclosed in quotation marks.
+    spaces, then it must be enclosed in quotation marks. You can specify @filename which
+    contains the entire line with parameters.
 
 Parameters:                                                                  Default values:
      -d      Folder containing the domains.                                      "+https.DocumentRoot+@"
@@ -1008,6 +1030,8 @@ Parameters:                                                                  Def
      -s      Number of requests being processed at the same time. Maximum        "+https.st.ToString()+@"
              value is 1000.
      -q      Number requests stored in the queue.                                "+https.qu.ToString()+@"
+     -w      Allowed time to reserve an open channel for request that did not    "+https.tw.ToString()+@"
+             started. From 1 to 20 seconds.
      -db     Maximum number of dynamically running MS VFP DBMS instances.        "+https.db.ToString()+@"
              Extending scripts to run VFP - prg. Processes are started as
              needed by simultaneous client requests to the set value. Maximum
