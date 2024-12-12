@@ -31,7 +31,7 @@ Parameters:                                                                  Def
      -s      Number of requests being processed at the same time. Maximum        20
              value is 1000.
      -q      Number requests stored in the queue.                                600
-     -w      Allowed time to reserve an open channel for request that did not    10000
+     -w      Allowed time to reserve an open channel for request that did not    10
              started. From 1 to 20 seconds.
      -db     Maximum number of dynamically running MS VFP DBMS instances.        20
              Extending scripts to run VFP - prg. Processes are started as
