@@ -214,7 +214,7 @@ public class httpd{
 
 class Session{
   private int i,k,Content_Length;
-  private string cont1, h1, reso, res, head, heads, Host, Content_Type,
+  private string cont1, h1, reso, res, head, heads, Host, Content_Type, Content_T,
                  Content_Disposition, QUERY_STRING, IP, jt, Port, x1, x2;
   private byte l, R, R1, R2;
   private byte[] bytes;
@@ -227,11 +227,10 @@ class Session{
     Accept(Server);
   }
 
-  public async void Accept(Socket Server){
+  async void Accept(Socket Server){
     Task<int> ti;
     DateTime dt1;
     double n;
-    string Content_T;
     NetworkStream Stream = null;
     Socket Client = null;
     while (httpd.notexit){
@@ -264,11 +263,9 @@ class Session{
             i = -1;
           }
           if(i>0){
-            l = getHeaders(UTF, ref bytes, ref cont1, ref k, ref reso, ref Host,
-                ref Content_Type, ref Content_Disposition, ref Content_Length, ref heads);
+            l = getHeaders();
             if(Host.Length>0){
-              res=prepResource(ref reso, ref QUERY_STRING, ref Host, ref R, ref R1,
-                  ref h1, ref Content_T);
+              prepResource();
               if(R==0) l=R;    // Дальше читать бессмысленно
             }
           }else{
@@ -293,10 +290,10 @@ class Session{
             }
           }
           if(R==1){
-            if(!gzExists(ref res, ref head)){
+            if(!gzExists()){
               if(!File.Exists(res)){
                 res=httpd.DocumentRoot+httpd.DI;
-                if(!gzExists(ref res, ref head)){
+                if(!gzExists()){
                   if(!File.Exists(res)){
                     R=0;
                     await failure(Stream,"404 Not Found");
@@ -326,11 +323,11 @@ class Session{
     }
   }
 
-  static void putCT(ref string c, string x){
+  void putCT(ref string c, string x){
     c=httpd.CT+": "+x+"\r\n";
   }
 
-  static bool gzExists(ref string res, ref string head){
+  bool gzExists(){
     string gz=res+".gz";
     bool L=File.Exists(gz);
     if(L){
@@ -340,8 +337,7 @@ class Session{
     return L;
   }
 
-  static string line1(Encoding UTF, ref byte[] bytes, ref string cont1, ref int k,
-                      ref byte b){
+  string line1(ref byte b){
     int i;
     string z=cont1;
     cont1="";
@@ -360,13 +356,10 @@ class Session{
     return z;
   }
 
-  static byte getHeaders(Encoding UTF, ref byte[] bytes, ref string cont1, ref int k,
-                ref string reso, ref string Host, ref string Content_Type,
-                ref string Content_Disposition, ref int Content_Length,
-                ref string heads){
+  byte getHeaders(){
     int i;
     byte b=0;
-    string lin=line1(UTF, ref bytes, ref cont1, ref k, ref b),n,h;
+    string lin=line1(ref b),n,h;
 
     while (lin.Length>0){
 // Console.WriteLine(lin);
@@ -402,14 +395,13 @@ class Session{
           }
         }
       }
-      lin=line1(UTF, ref bytes, ref cont1, ref k, ref b);
+      lin=line1(ref b);
     }
     return b;
   }
 
-  static string prepResource(ref string reso, ref string QUERY_STRING, ref string Host,
-                             ref byte R, ref byte R1, ref string h1, ref string Content_T){
-    string sub,res="",ext=".";
+  void prepResource(){
+    string sub,ext=".";
     if(reso.Length==0){
       R=0;
     }else{
@@ -497,7 +489,6 @@ class Session{
       reso=sub+res;
       res=httpd.DocumentRoot+reso;
     }
-    return res;
   }
 
   async Task failure(System.Net.Sockets.NetworkStream Stream, string z){
