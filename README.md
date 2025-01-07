@@ -67,7 +67,11 @@ Parameters:                                                                  Def
 *  Тест. Вывод переменных окружения.                   версия 07.01.2025  *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   c13 = chr(13) + chr(10)
+
+* P.S. До этого присвоения информация из _Screen.STD_IO.value, находящаяся
+* в качестве стандартного ввода, должна быть прочитана:
   _Screen.STD_IO.value = "Content-Type: text/html" + c13 + c13
+
   STD_Write("<h1>Привет мир из MS VFP!</h1>" + ;
      "<h3>Переменные окружения:</h3>" + ;
      "SCRIPT_FILENAME=" + SCRIPT_FILENAME + ";<br>" + c13 + ;
@@ -77,6 +81,8 @@ Parameters:                                                                  Def
      "STD_INPUT=" + STD_INPUT + ";<br>" + c13 + ;
      "POST_FILENAME=" + POST_FILENAME + ";<br>" + c13)
   STD_Write("ERROR_MESS=" + ERROR_MESS)
+* P.S. Также при необходимости, если работают оба сервера (http.net и
+* https.net) можно использовать переменную окружения m.SERVER_PROTOCOL.
 
 func STD_Write(mess)
   _Screen.STD_IO.SelStart = len(_Screen.STD_IO.value)
