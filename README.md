@@ -66,18 +66,21 @@ Parameters:                                                                  Def
 * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 *  Тест. Вывод переменных окружения.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-  stdout=""
   c13=chr(13)+chr(10)
-  stdout="<h1>Привет мир из MS VFP!</h1>" + ;
-         "<h3>Переменные окружения:</h3>" + ;
-         "SCRIPT_FILENAME=" + SCRIPT_FILENAME + ";<br>" + c13 + ;
-         "QUERY_STRING=" + QUERY_STRING + ";<br>" + c13+ ;
-         "HTTP_COOKIE=" + STRE(HTTP_HEADERS,"Cookie:",c13) + ";<br>" + c13 + ;
-         "REMOTE_ADDR=" + REMOTE_ADDR + ";<br>" + c13 + ;
-         "STD_INPUT=" + STD_INPUT + ";<br>" + c13 + ;
-         "POST_FILENAME=" + POST_FILENAME + ";<br>" + c13
-  stdout= stdout + "ERROR_MESS=" + ERROR_MESS
-return "Content-Type: text/html"+c13+c13+stdout
+  _Screen.STD_IO.value="Content-Type: text/html"+c13+c13
+  STD_Write("<h1>Привет мир из MS VFP!</h1>" + ;
+     "<h3>Переменные окружения:</h3>" + ;
+     "SCRIPT_FILENAME=" + SCRIPT_FILENAME + ";<br>" + c13 + ;
+     "QUERY_STRING=" + QUERY_STRING + ";<br>" + c13+ ;
+     "HTTP_COOKIE=" + STRE(HTTP_HEADERS,"Cookie:",c13) + ";<br>" + c13 + ;
+     "REMOTE_ADDR=" + REMOTE_ADDR + ";<br>" + c13 + ;
+     "STD_INPUT=" + STD_INPUT + ";<br>" + c13 + ;
+     "POST_FILENAME=" + POST_FILENAME + ";<br>" + c13)
+  STD_Write("ERROR_MESS=" + ERROR_MESS)
+
+func STD_Write(mess)
+  _Screen.STD_IO.SelStart=len(_Screen.STD_IO.value)
+  _Screen.STD_IO.SelText=mess
 ```
 The visual result of the prg script:
 ![The visual result of the prg script](screenShots/2024-03-21.png)
