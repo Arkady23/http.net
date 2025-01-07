@@ -140,10 +140,10 @@ If there is an error in the prg file:
 2.6.1. November 2024. Default values have been changed for more stable server functioning. The SERVER_PROTOCOL environment variable has been added.  
 2.6.2-2.6.3. November 2024. Added syntactic control of the query method. The value of the response duration in ms has been added to the log, the symbol "-" when the server refuses to process the request, and some other changes in the log.  
 2.6.4. November 2024. Minor corrections. Fixed bug blocking the SSL stream in https.net server.  
-2.6.5-2.6.6. November 2024. If the file name with the default extension matches the existing directory name, then the request is now considered for an existing file..  
+2.6.5-2.6.6. November 2024. If the file name with the default extension matches the existing directory name, then the request is now considered for an existing file.  
 2.6.7. November 2024. Information about the server version has been added to the log.  
 2.6.8. November 2024. Fixed a bug for the API variant.  
 2.6.9. November 2024. It is set to cancel the request if the client, having established a connection, does not start sending headers within 10 seconds. Such requests could block the server. If execution error occurs, the message is now sent to the http.net.err.log file.  
 2.6.10. November 2024. The logs are switched between each other when one of them is filled up to a set number of lines.  
 2.7.0. Added an option to start the server with the command line parameters located in the file.  
-
+3.0.0. The server engine has been replaced with the Microsoft engine. The program appearance has been changed from a console application to a form. The icon has been added to tray. Now a single socket buffer is used to read a request and the same for writing a response. The _Screen.STD_IO object has been added to VFP, which is used as standard input/output. The Return operator is now used only in API mode to return the HTTP status code.  
