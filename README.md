@@ -86,7 +86,10 @@ Parameters:                                                                  Def
 * https.net) можно использовать переменную окружения m.SERVER_PROTOCOL.
 
 * Функция чтения стандартного ввода, при наличии в нем
-* больших данных:
+* больших данных.
+* offset - номер предыдущего прочитанного символа
+*          или 0 для чтения сначала;
+* count - количество читаемых символов.
 Func STD_Read(offset, count)
   _Screen.STD_IO.SelStart = m.offset
   _Screen.STD_IO.SelLength = m.count
