@@ -86,14 +86,14 @@ Parameters:                                                                  Def
 * https.net) можно использовать переменную окружения m.SERVER_PROTOCOL.
 
 * Функция чтения стандартного ввода, при наличии в нем
-* больших данных
+* больших данных:
 Func STD_Read(offset, count)
   _Screen.STD_IO.SelStart = m.offset
   _Screen.STD_IO.SelLength = m.count
 Return _Screen.STD_IO.SelText
 
 * Функция записи в стандартный ввод, при необходимости записи
-* больших данных
+* больших данных:
 Func STD_Write(mess)
   _Screen.STD_IO.SelStart = len(_Screen.STD_IO.value)
   _Screen.STD_IO.SelText = mess
