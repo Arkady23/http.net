@@ -82,6 +82,7 @@ Parameters:                                                                  Def
      "STD_INPUT=" + STD_INPUT + ";<br>" + c13 + ;
      "POST_FILENAME=" + POST_FILENAME + ";<br>" + c13)
   STD_Write("ERROR_MESS=" + ERROR_MESS)
+
 * P.S. Также при необходимости, если работают оба сервера (http.net и
 * https.net) можно использовать переменную окружения m.SERVER_PROTOCOL.
 
