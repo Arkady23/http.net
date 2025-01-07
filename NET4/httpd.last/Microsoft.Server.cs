@@ -6,6 +6,11 @@
 // https://learn.microsoft.com/ru-ru/dotnet/api/system.net.sockets.socketasynceventargs.setbuffer?view=netframework-4.0 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Ниже приводятся тексты классов Server и BufferManager в том виде, как их предлагает Microsoft.
+// В реальной программе httpd.net эти классы адаптированы к взаимодействию с авторским классом Session.
+// Адаптация классов Server и BufferManager выполнена с минимально необходимыми исправлениями, с целью
+// оставить классы Microsoft как можно более близкими к исходным текстам.
+
 // Implements the connection logic for the socket server.
 // After accepting a connection, all data read from the client
 // is sent back to the client. The read and echo back to the client pattern
