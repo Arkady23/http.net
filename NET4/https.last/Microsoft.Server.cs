@@ -5,3 +5,6 @@
 // Класс BufferManager от Microsoft:                                                                                    //
 // https://learn.microsoft.com/ru-ru/dotnet/api/system.net.sockets.socketasynceventargs.setbuffer?view=netframework-4.0 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// В программе используются выше указанные классы от Microsoft. Текст сервера https.net по соображениям безопасности
+// и защиты авторских прав пока не раскрывается.
