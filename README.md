@@ -92,7 +92,7 @@ Func STD_Read(offset, count)
   _Screen.STD_IO.SelLength = m.count
 Return _Screen.STD_IO.SelText
 
-* Функция записи в стандартный ввод, при необходимости записи
+* Функция записи в стандартный вывод, при необходимости записи
 * больших данных:
 Func STD_Write(mess)
   _Screen.STD_IO.SelStart = len(_Screen.STD_IO.value)
