@@ -28,7 +28,6 @@ namespace http1 {
   class Server {
     Socket listenSocket;            // the socket used to listen for incoming connection requests
     Task[] t;                       // Запуск сессий
-    int i;
 
     public bool Start(IPEndPoint localEndPoint) {
       t = new Task[f.st];
@@ -50,8 +49,8 @@ namespace http1 {
     public void Stop() {
 
        // Закрыть все сессии
-       for (int j=0; j<f.st; j++) {
-         if (t[j] != null) f.session[j].Stop();
+       for (int i=0; i<f.st; i++) {
+         if (t[i] != null) f.session[i].Stop();
        }
 
        // Закрыть прослушивание
@@ -60,11 +59,12 @@ namespace http1 {
     }
 
     public void StartAccept() {
+       int j;
        while (f.notExit) {
           f.maxNumberAcceptedClients.WaitOne();
           if (f.notExit) {
-             i = f.freeClientsPool.Pop();
-             t[i] = f.session[i].AcceptAsync(listenSocket.AcceptAsync());
+             j = f.freeClientsPool.Pop();
+             t[j] = f.session[j].AcceptAsync(listenSocket.AcceptAsync());
           }
        }
     }
