@@ -31,6 +31,8 @@ Parameters:                                                                  Def
      -s      Number of requests being processed at the same time. Maximum        400
              value is 1000.
      -q      Number requests stored in the queue.                                600
+     -w      Allowed time to reserve an open channel for request that did not    10
+             started. From 1 to 20 seconds.
      -db     Maximum number of dynamically running MS VFP DBMS instances.        20
              Extending scripts to run VFP - prg. Processes are started as
              needed by simultaneous client requests to the set value. Maximum
@@ -165,4 +167,4 @@ If there is an error in the prg file:
 2.6.9. November 2024. It is set to cancel the request if the client, having established a connection, does not start sending headers within 10 seconds. Such requests could block the server. If execution error occurs, the message is now sent to the http.net.err.log file.  
 2.6.10. November 2024. The logs are switched between each other when one of them is filled up to a set number of lines.  
 2.7.0. Added an option to start the server with the command line parameters located in the file.  
-3.0.0. January 2025. The server engine has been replaced with the Microsoft engine. The program appearance has been changed from a console application to a form. The icon has been added to tray. Now a single socket buffer is used to read a request and the same for writing a response. The _Screen.STD_IO object has been added to VFP, which is used as standard input/output. The Return operator is now used only in API mode to return the HTTP status code.  
+3.0.0. January 2025. The appearance of the program has been changed from a console application to a form. The icon has been added to the tray. Now one socket buffer is used to read the request, and the same is used to write the response. The _Screen.STD_IO object has been added to VFP, which is used as standard input/output. The Return operator is now used only in API mode to return the HTTP status code. VFP no longer requires encoding the sent text in unicode using the Strconv(Var,9) operator. The server determines the encoding of the read text in accordance with the settings in VFP.  
