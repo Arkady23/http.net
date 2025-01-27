@@ -50,8 +50,8 @@ namespace http1 {
     public void Stop() {
 
        // Закрыть все сессии
-       for (i=0; i<f.st; i++) {
-         if (t[i] != null) f.session[i].Stop();
+       for (int j=0; j<f.st; j++) {
+         if (t[j] != null) f.session[j].Stop();
        }
 
        // Закрыть прослушивание
