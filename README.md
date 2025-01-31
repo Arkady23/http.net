@@ -73,7 +73,7 @@ Parameters:                                                                  Def
 
 * P.S. До этого присвоения информация из _Screen.STD_IO.value, находящаяся
 * в качестве стандартного ввода, должна быть прочитана:
-  _Screen.STD_IO.value = "Content-Type: text/html" + c13 + c13
+  _Screen.STD_IO.value = 'Content-Type: text/html; charset="utf-8"' + c13 + c13
 
   STD_Write("<h1>Привет мир из MS VFP!</h1>" + ;
      "<h3>Переменные окружения:</h3>" + ;
